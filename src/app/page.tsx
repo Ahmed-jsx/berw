@@ -1,14 +1,12 @@
-"use client";
 import DiscountDialog from "@/components/Discount";
 import { FloatingImage } from "@/components/FloatingImage";
 import { Button } from "@/components/ui/button";
-import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function Soon() {
   return (
-    <div className="w-full h-screen relative dark:bg-gradient-to-b dark:from-[rgba(3,111,118,0.68)] dark:via-[rgba(255,210,28,0.705)] dark:to-transparent bg-gradient-to-b from-[rgba(3,111,118,0.68)] via-[rgba(255,210,28,0.705)] to-transparent">
+    <div className="w-full h-full relative dark:bg-gradient-to-b dark:from-[rgba(3,111,118,0.68)] dark:via-[rgba(255,210,28,0.705)] dark:to-transparent bg-gradient-to-b from-[rgba(3,111,118,0.68)] via-[rgba(255,210,28,0.705)] to-transparent">
       {/* Floating Decorative Images */}
       <FloatingImage
         src="/1.svg"
@@ -99,17 +97,22 @@ export default function Soon() {
 
           <DiscountDialog />
 
-          <Link className="w-full px-8 lg:px-0" href={"/"}>
+          <Link
+            target="_blank"
+            className="w-full px-8 lg:px-0"
+            href={
+              "https://drive.google.com/file/d/1SR5aDPjZYPii0TUMGGM_FW9Ps0bmKWBe/view?usp=drive_link"
+            }
+          >
             <Button className="rounded-full font-medium bg-[#E7BC20] hover:bg-[##E7BC20]/80 text-lg w-[300px] py-[30px]">
               Show Menu
             </Button>
           </Link>
 
           <div className="max-w-[700px] my-[30px] px-8 lg:px-0 text-[#047578] flex flex-col  gap-2">
-            <p className="mt-[30px] font-semibold text-lg  lg:text-xl">
+            <p className=" font-semibold text-lg  lg:text-xl">
               {" "}
-              Sign up with your data and get a 25% discount on your order on our
-              store, and subscribe to get our updates{" "}
+              Sign up and Get 25% on your first order
             </p>
             <p className="text-xs mt-4">Terms and conditions apply.</p>
           </div>

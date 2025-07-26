@@ -171,8 +171,7 @@ function DiscountDialog() {
                   Discount <span className="text-yellow-300 text-3xl">25%</span>
                 </h2>
                 <p className="text-sm text-white/90">
-                  Sign up with your data and get a 25% discount on your order on
-                  our store, and subscribe to get our updates
+                  Sign up and Get 25% on your first order
                 </p>
               </div>
             </div>

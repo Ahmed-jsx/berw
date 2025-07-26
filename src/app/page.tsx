@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export default function Soon() {
   return (
-    <div className="w-full h-screen relative bg-gradient-to-b from-[rgba(3,111,118,0.68)] via-[rgba(255,210,28,0.705)] to-transparent">
+    <div className="w-full h-screen relative dark:bg-gradient-to-b dark:from-[rgba(3,111,118,0.68)] dark:via-[rgba(255,210,28,0.705)] dark:to-transparent bg-gradient-to-b from-[rgba(3,111,118,0.68)] via-[rgba(255,210,28,0.705)] to-transparent">
       {/* Floating Decorative Images */}
       <motion.div
         animate={{ y: [0, -15, 0] }}

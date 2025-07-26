@@ -17,12 +17,13 @@ import * as z from "zod";
 import { useState } from "react";
 import { X } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  phoneNumber: z.string().min(10, {
+  phone_number: z.string().min(10, {
     message: "Phone number must be at least 10 digits.",
   }),
   email: z.string().email({
@@ -39,7 +40,7 @@ function DiscountDialog() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      phoneNumber: "",
+      phone_number: "",
       email: "",
     },
   });
@@ -59,6 +60,15 @@ function DiscountDialog() {
         }
       );
 
+      // 🟡 Check for 409 BEFORE throwing on !ok
+      if (response.status === 409) {
+        setOpen(false);
+        toast.error("Discount already exists", {
+          duration: 4000,
+        });
+        return; // don't continue
+      }
+
       if (!response.ok) {
         throw new Error("Failed to submit form");
       }
@@ -66,7 +76,7 @@ function DiscountDialog() {
       setShowCongratulations(true);
     } catch (error) {
       console.error("Submission failed:", error);
-      // Optionally, show toast or error message
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -196,7 +206,7 @@ function DiscountDialog() {
 
                   <FormField
                     control={form.control}
-                    name="phoneNumber"
+                    name="phone_number"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-700">

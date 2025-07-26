@@ -1,5 +1,6 @@
 "use client";
 import DiscountDialog from "@/components/Discount";
+import { FloatingImage } from "@/components/FloatingImage";
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
 import Image from "next/image";
@@ -9,19 +10,23 @@ export default function Soon() {
   return (
     <div className="w-full h-screen relative dark:bg-gradient-to-b dark:from-[rgba(3,111,118,0.68)] dark:via-[rgba(255,210,28,0.705)] dark:to-transparent bg-gradient-to-b from-[rgba(3,111,118,0.68)] via-[rgba(255,210,28,0.705)] to-transparent">
       {/* Floating Decorative Images */}
-      <motion.div
-        animate={{ y: [0, -15, 0] }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          repeatType: "loop",
-          ease: "easeInOut",
-        }}
-        className="lg:block absolute hidden top-2 left-2 "
-      >
-        <Image src="/1.svg" width={300} height={80} alt="decoration-left" />
-      </motion.div>{" "}
-      <motion.div
+      <FloatingImage
+        src="/1.svg"
+        className="lg:block absolute hidden top-2 left-2"
+        width={300}
+        height={80}
+        floatDuration={5}
+        delay={0.2}
+      />
+      <FloatingImage
+        src="/cup.svg"
+        className="lg:block absolute hidden top-2 right-2"
+        width={300}
+        height={80}
+        floatDuration={5}
+        delay={0.2}
+      />
+      {/* <motion.div
         animate={{ y: [0, -15, 0] }}
         transition={{
           duration: 2,
@@ -80,7 +85,7 @@ export default function Soon() {
         className="lg:block absolute hidden top-[550px] right-2 "
       >
         <Image src="/cup.svg" width={200} height={80} alt="decoration-left" />
-      </motion.div>
+      </motion.div> */}
       {/* Main Content */}
       <div className="flex items-center justify-center h-full px-8 lg:px-0">
         <div className="flex flex-col lg:mt-10 mt-24 items-center text-center  space-y-6">

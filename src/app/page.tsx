@@ -101,7 +101,7 @@ export default function Soon() {
             target="_blank"
             className="w-full px-8 lg:px-0"
             href={
-              "https://drive.google.com/file/d/1SR5aDPjZYPii0TUMGGM_FW9Ps0bmKWBe/view?usp=drive_link"
+              "https://drive.google.com/drive/folders/1ouIsnll78MW2p-8ogF00zS7kwG6YFnOB?usp=share_link"
             }
           >
             <Button className="rounded-full font-medium bg-[#E7BC20] hover:bg-[##E7BC20]/80 text-lg w-[300px] py-[30px]">
@@ -112,7 +112,7 @@ export default function Soon() {
           <div className="max-w-[700px] my-[30px] px-8 lg:px-0 text-[#047578] flex flex-col  gap-2">
             <p className=" font-semibold text-lg  lg:text-xl">
               {" "}
-              Sign up and Get 25% on your first order
+              Sign up and Get 15% on your first order
             </p>
             <p className="text-xs mt-4">Terms and conditions apply.</p>
           </div>

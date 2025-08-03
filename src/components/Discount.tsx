@@ -99,7 +99,7 @@ function DiscountDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="rounded-full font-medium  bg-[#047578] hover:bg-[#047578]/80 text-lg max-w-[300px] w-full mt-6 py-[30px]">
-          Get 25% Discount
+          Get 15% Discount
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] p-0 gap-0">
@@ -138,7 +138,7 @@ function DiscountDialog() {
                 </h2>
 
                 <p className="text-gray-700 text-base leading-relaxed max-w-md mx-auto">
-                  You now have a 25% off discount on your next order at our
+                  You now have a 15% off discount on your next order at our
                   store. Please show this screen to the cashier while paying for
                   your order
                 </p>
@@ -168,10 +168,10 @@ function DiscountDialog() {
               </button>
               <div className="pr-8">
                 <h2 className="text-2xl font-bold mb-2">
-                  Discount <span className="text-yellow-300 text-3xl">25%</span>
+                  Discount <span className="text-yellow-300 text-3xl">15%</span>
                 </h2>
                 <p className="text-sm text-white/90">
-                  Sign up and Get 25% on your first order
+                  Sign up and Get 15% on your first order
                 </p>
               </div>
             </div>
@@ -249,7 +249,7 @@ function DiscountDialog() {
                     className="w-full bg-[#047578] hover:bg-[#047578]/90 text-white py-3 rounded-full text-base font-medium mt-6"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Processing..." : "Get 25% Discount"}
+                    {isSubmitting ? "Processing..." : "Get 15% Discount"}
                   </Button>
                 </form>
               </Form>

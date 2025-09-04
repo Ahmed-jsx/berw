@@ -1,16 +1,15 @@
 // types/auth.ts
 export interface User {
-    user_id: string;
+    id: string;
     user_email: string;
     user_name: string;
     user_number: string;
-    role: 'user' | 'admin';
     createdAt: string;
     updatedAt: string;
   }
   
   export interface LoginRequest {
-    user_email: string;
+    user_email: string; // Based on your Postman request
     password: string;
   }
   
@@ -22,8 +21,9 @@ export interface User {
   }
   
   export interface AuthResponse {
-    user: User;
-    csrfToken: string;
+    message: string;
+    token: string; // JWT token from backend (main field from your API)
+    user?: User; // Optional - if backend sends user data
   }
   
   export interface ApiError {

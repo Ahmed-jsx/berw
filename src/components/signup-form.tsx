@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useRegister } from "@/hooks/use-auth";
-import { FetchError } from "@/lib/fetcher";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Eye, EyeOff, Loader2, X } from "lucide-react";
@@ -47,16 +46,14 @@ const signUpSchema = z
       .min(1, "Phone number is required")
       .regex(/^\+?[\d\s\-\(\)\.]+$/, "Please enter a valid phone number")
       .min(10, "Phone number must be at least 10 digits"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/\d/, "Password must contain at least one number")
-      .regex(
-        /[!@#$%^&*(),.?":{}|<>]/,
-        "Password must contain at least one special character"
-      ),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    // .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    // .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    // .regex(/\d/, "Password must contain at least one number")
+    // .regex(
+    //   /[!@#$%^&*(),.?":{}|<>]/,
+    //   "Password must contain at least one special character"
+    // )
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -106,31 +103,32 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
 
   const passwordValidation = validatePassword(password || "");
 
-  const onSubmit = async (data: SignUpFormData) => {
+  const onSubmit = async (userData: SignUpFormData) => {
     try {
-      const { confirmPassword, ...registerData } = data;
+      const response = await fetch(
+        "https://monkey-1-jhiq.onrender.com/api/user/signup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        }
+      );
 
-      // Show loading toast
-      const loadingToastId = toast.loading("Creating your account...");
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Signup failed");
+        throw new Error(errorData.message || "Signup failed");
+      }
 
-      await registerMutation.mutateAsync(registerData);
-
-      // Dismiss loading toast and show success
-      toast.dismiss(loadingToastId);
-      toast.success("Account created successfully!", {
-        description: "Welcome! You can now start using our platform.",
-      });
+      const data = await response.json();
+      toast.success("Signup successful");
+      return data;
     } catch (error) {
-      // Handle errors with toast
-      toast.dismiss();
-      const errorMessage =
-        error instanceof FetchError
-          ? error.message
-          : "Registration failed. Please try again.";
-
-      toast.error("Registration failed", {
-        description: errorMessage,
-      });
+      console.error("Signup error:", error);
+      toast.error("Signup failed");
+      throw error;
     }
   };
 

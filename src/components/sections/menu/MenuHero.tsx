@@ -1,16 +1,10 @@
 "use client";
 
 import { useCoffeeFilters } from "@/store/coffeeFilters";
-import { useQueryState } from "nuqs";
 import { useEffect } from "react";
 
 export default function HeroSection() {
-  const [search, setSearch] = useQueryState("search");
   const { setSearch: setStoreSearch } = useCoffeeFilters();
-
-  useEffect(() => {
-    setStoreSearch(search ?? "");
-  }, [search, setStoreSearch]);
 
   return (
     <section
@@ -32,8 +26,6 @@ export default function HeroSection() {
             type="text"
             placeholder="Search your favorite drink..."
             className="w-full max-w-lg px-6 py-3 rounded-full bg-white shadow-md focus:outline-none focus:ring-2 text-black focus:ring-yellow-400"
-            value={search ?? ""}
-            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>

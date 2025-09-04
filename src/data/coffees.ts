@@ -21,46 +21,39 @@ export interface Coffee {
   price: number
   image: string
   category: CategorySlug
+  extras?: string[]
 }
 
-export const categories: Category[] = [
+export const categories = [
   {
-    slug: "classics",
     label: "Classics",
     image: "/bg1.png",
   },
   {
-    slug: "signature-drinks",
     label: "Signature Drinks",
     image: "/bg1.png",
   },
   {
-    slug: "matcha",
     label: "Matcha",
     image: "/bg1.png",
   },
   {
-    slug: "non-coffee-refreshers",
     label: "Non Coffee Refreshers",
     image: "/bg1.png",
   },
   {
-    slug: "filter-brewing",
     label: "Filter Brewing",
     image: "/bg1.png",
   },
   {
-    slug: "bakery",
     label: "Bakery",
     image: "/bg1.png",
   },
   {
-    slug: "sandwiches",
     label: "Sandwiches",
     image: "/bg1.png",
   },
   {
-    slug: "desserts",
     label: "Desserts",
     image: "/bg1.png",
   },
@@ -76,6 +69,7 @@ export const coffees: Coffee[] = [
     price: 105,
     category: "classics",
     image: "/bg1.png",
+    extras: ["Extra Shot", "Extra Shot", "Extra Shot"],
   },
   {
     id: "moc-1",

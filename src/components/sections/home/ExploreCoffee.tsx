@@ -1,54 +1,46 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
-import { parseAsString, useQueryState } from "nuqs";
+import { useMemo } from "react";
 
 import ItemBadge from "@/components/ItemBadge";
 import ItemCard from "@/components/ItemCard";
-import { categories, CategorySlug, coffees } from "@/data/coffees";
-import { useCoffeeStore } from "@/store/coffeeStore"; // Import the centralized store
-import { useCoffeeFilters } from "@/store/coffeeFilters"; // Import the filters store
+import { CategorySlug, coffees } from "@/data/coffees";
+import { useCoffeeStore } from "@/store/coffeeStore";
 
-// ---- Component ----
+const categories = [
+  {
+    label: "Classics",
+    slug: "classics" as CategorySlug,
+    image: "/bg1.png",
+  },
+  {
+    label: "Signature Drinks",
+    slug: "signature-drinks" as CategorySlug,
+    image: "/bg1.png",
+  },
+  {
+    label: "Matcha",
+    slug: "matcha" as CategorySlug,
+    image: "/bg1.png",
+  },
+  {
+    label: "Non Coffee Refreshers",
+    slug: "non-coffee-refreshers" as CategorySlug,
+    image: "/bg1.png",
+  },
+  {
+    label: "Filter Brewing",
+    slug: "filter-brewing" as CategorySlug,
+    image: "/bg1.png",
+  },
+];
+
 export function ExploreCoffee() {
   const { active, setActive } = useCoffeeStore(); // Use the centralized store
-  const { search } = useCoffeeFilters(); // Use the filters store
-
-  // Bind Zustand state to nuqs search param
-  const [categoryParam, setCategoryParam] = useQueryState(
-    "category",
-    parseAsString.withDefault("classics")
-  );
-
-  // Sync store with URL param
-  useEffect(() => {
-    if (categoryParam) {
-      setActive(categoryParam as CategorySlug);
-    }
-  }, [categoryParam, setActive]);
-
-  // Sync URL param with store
-  useEffect(() => {
-    setCategoryParam(active);
-  }, [active, setCategoryParam]);
 
   const visible = useMemo(() => {
-    if (search) {
-      const searchResults = coffees.filter((c) =>
-        c.name.toLowerCase().includes(search.toLowerCase())
-      );
-      if (searchResults.length > 0) {
-        // If search yields results, update the active category to the first match
-        // This will trigger the useEffect to update the URL param
-        if (active !== searchResults[0].category) {
-          setActive(searchResults[0].category);
-        }
-        return searchResults;
-      }
-    }
-    // If no search term or no results, filter by the active category
     return coffees.filter((c) => c.category === active);
-  }, [active, search, setActive]);
+  }, [active]);
 
   const activeCategoryLabel =
     categories.find((c) => c.slug === active)?.label ?? "Coffee";

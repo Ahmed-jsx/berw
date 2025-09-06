@@ -9,17 +9,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow access to coming-soon page, API routes, static assets, and favicon
+  // Allow access to coming-soon page, API routes, Next.js assets, and public files
   if (
     pathname.startsWith('/coming-soon') ||
     pathname.startsWith('/api') ||
-    pathname.startsWith('/_next') ||
-    pathname === '/favicon.ico'
+    pathname.startsWith('/_next') || // next.js assets
+    pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)$/) // public images
   ) {
     return NextResponse.next();
   }
 
-  // Redirect all other routes to coming-soon
+  // Redirect everything else to coming-soon
   return NextResponse.redirect(new URL('/coming-soon', request.url));
 }
 

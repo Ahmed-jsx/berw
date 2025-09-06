@@ -1,10 +1,9 @@
-import Footer from "@/components/global/Footer";
-import Header from "@/components/global/Header";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import Providers from "../providers/provider";
 import "./globals.css";
+import { redirect } from "next/navigation";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",

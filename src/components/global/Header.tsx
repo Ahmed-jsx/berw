@@ -10,12 +10,14 @@ const Header = () => {
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
   const auth = pathname === "/login" || pathname === "/sign-up";
+  const isComingSoon = pathname === "/coming-soon";
 
   return (
     <header
       className={cn(
         "fixed top-16 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-[1300px] mx-auto px-4",
-        auth && "top-2"
+        auth && "top-2",
+        isComingSoon && "hidden"
       )}
     >
       <nav className="relative rounded-full px-12 py-4 shadow-xl overflow-hidden">
@@ -27,7 +29,7 @@ const Header = () => {
             <Logo width={50} variant="secondary" />
             <div className="hidden md:flex items-center gap-4">
               {NAV_ITEMS.map((item) => (
-                <Link key={item.title} href={item.href}>
+                <Link key={item.title} href={item.href || "#"}>
                   <span
                     className={cn(
                       "text-white/80 transition-all duration-200 hover:text-white px-4 py-2 rounded-full",

@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Hero() {
   return (
-    <div className="min-h-screen max-w-[calc(100vw-6rem)] my-8 mx-auto rounded-[40px] relative overflow-hidden">
+    <div className="min-h-screen lg:max-w-[calc(100vw-6rem)] lg:my-8 lg:mx-auto max-w-full lg:rounded-[40px] relative overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image

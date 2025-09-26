@@ -1,13 +1,25 @@
-import { useAuthStore } from "@/store/auth-store";
-import { redirect } from "next/navigation";
+import { AppSidebar } from "@/components/app-sidebar";
+import AuthGuard from "@/components/auth/AuthGuard";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-const layout = ({ children }: { children: React.ReactNode }) => {
-  //   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  const sidebarProviderStyle = {
+    "--sidebar-width": "calc(var(--spacing) * 72)",
+    "--header-height": "calc(var(--spacing) * 12)",
+  } as React.CSSProperties;
 
-  //   if (!isAuthenticated) {
-  //     redirect("/login");
-  //   }
-  return <div>{children}</div>;
+  return (
+    <AuthGuard>
+      <SidebarProvider style={sidebarProviderStyle}>
+        <AppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          {children}
+        </SidebarInset>
+      </SidebarProvider>
+    </AuthGuard>
+  );
 };
 
-export default layout;
+export default Layout;

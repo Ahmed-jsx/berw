@@ -1,25 +1,9 @@
 "use client";
 
-import { useCoffeeFilters } from "@/store/coffeeFilters";
-import { useEffect } from "react";
-
 export default function HeroSection() {
-  const { setSearch: setStoreSearch } = useCoffeeFilters();
-
   return (
-    <section
-      className="relative max-w-[calc(100vw-6rem)] my-8 mx-auto rounded-default min-h-[80vh] overflow-hidden flex flex-col items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: "url('/bg1.png')" }}
-    >
-      {/* Blur Overlay */}
-      <div className="absolute inset-0 rounded-default bg-black/20 backdrop-blur-sm"></div>
-
+    <section className="relative max-w-[calc(100vw-6rem)] my-8 mx-auto rounded-default   flex flex-col items-center justify-center bg-cover bg-center">
       <div className="relative z-10 w-full max-w-6xl mx-auto px-4 text-center">
-        {/* Heading */}
-        <h1 className="text-5xl font-bold text-white drop-shadow-lg">
-          Explore the Coffee World
-        </h1>
-
         {/* Search */}
         <div className="mt-6 flex justify-center">
           <input

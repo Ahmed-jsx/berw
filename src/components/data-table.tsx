@@ -32,12 +32,14 @@ import {
   Columns,
   Loader,
   Plus,
-  TrendingUp,
   User,
   Mail,
   Phone,
   ShoppingBag,
   Star,
+  Eye,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import {
   ColumnDef,
@@ -55,23 +57,160 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
 
+import { useUsers } from "@/hooks/useUsers";
+
+// Schema adapted to API
 export const schema = z.object({
   id: z.number(),
   name: z.string(),
   email: z.string().email(),
   phone: z.string(),
-  orderCount: z.number(),
-  points: z.number(),
-  status: z.string(),
+  orderCount: z.number().default(0),
+  points: z.number().default(0),
+  status: z.string().default("Active"),
   joinDate: z.string(),
 });
 
-// Create a separate component for the drag handle
+// --- Skeleton Components ---
+function TableSkeleton() {
+  return (
+    <div className="w-full space-y-6 p-6 bg-gray-50 min-h-screen">
+      <div className="animate-pulse">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <th key={i} className="px-4 py-3">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <tr key={i} className="border-b">
+                <td className="px-4 py-4">
+                  <div className="h-4 bg-gray-200 rounded w-8"></div>
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-4">
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-200 rounded w-32"></div>
+                    <div className="h-3 bg-gray-200 rounded w-28"></div>
+                  </div>
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex justify-center">
+                    <div className="h-6 bg-gray-200 rounded-full w-12"></div>
+                  </div>
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex justify-center">
+                    <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                  </div>
+                </td>
+                <td className="px-4 py-4">
+                  <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                </td>
+                <td className="px-4 py-4">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex justify-center">
+                    <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// --- Action Dropdown Component ---
+function ActionDropdown({ userId }: { userId: number }) {
+  const router = useRouter();
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const handleViewDetails = () => {
+    router.push(`/dashboard/users/${userId}`);
+    setIsOpen(false);
+  };
+
+  const handleEdit = () => {
+    // Add edit functionality here
+    console.log("Edit user", userId);
+    setIsOpen(false);
+  };
+
+  const handleDelete = () => {
+    // Add delete functionality here
+    console.log("Delete user", userId);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+        aria-label="More actions"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Dropdown Menu */}
+          <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+            <button
+              onClick={handleViewDetails}
+              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Eye className="h-4 w-4" />
+              View Details
+            </button>
+            <button
+              onClick={handleEdit}
+              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Edit className="h-4 w-4" />
+              Edit User
+            </button>
+            <hr className="my-1 border-gray-100" />
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete User
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 function DragHandle({ id }: { id: number }) {
-  const { attributes, listeners } = useSortable({
-    id,
-  });
+  const { attributes, listeners } = useSortable({ id });
 
   return (
     <button
@@ -85,39 +224,12 @@ function DragHandle({ id }: { id: number }) {
   );
 }
 
+// --- Columns ---
 const columns: ColumnDef<z.infer<typeof schema>>[] = [
   {
     id: "drag",
     header: () => null,
     cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <input
-          type="checkbox"
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onChange={(e) => table.toggleAllPageRowsSelected(!!e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <input
-          type="checkbox"
-          checked={row.getIsSelected()}
-          onChange={(e) => row.toggleSelected(!!e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-        />
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
   },
   {
     accessorKey: "name",
@@ -144,7 +256,6 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         </div>
       );
     },
-    enableHiding: false,
   },
   {
     accessorKey: "email",
@@ -226,41 +337,13 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const [isOpen, setIsOpen] = React.useState(false);
-
-      return (
-        <div className="relative">
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 text-gray-500 hover:bg-gray-100 rounded"
-          >
-            <MoreVertical className="h-4 w-4" />
-            <span className="sr-only">Open menu</span>
-          </button>
-          {isOpen && (
-            <div className="absolute right-0 top-full z-50 mt-1 w-32 rounded-md border bg-white shadow-lg">
-              <button className="block w-full px-3 py-2 text-sm text-left hover:bg-gray-100">
-                Edit
-              </button>
-              <button className="block w-full px-3 py-2 text-sm text-left hover:bg-gray-100">
-                View Orders
-              </button>
-              <button className="block w-full px-3 py-2 text-sm text-left hover:bg-gray-100">
-                Send Email
-              </button>
-              <hr className="my-1" />
-              <button className="block w-full px-3 py-2 text-sm text-left text-red-600 hover:bg-red-50">
-                Delete
-              </button>
-            </div>
-          )}
-        </div>
-      );
-    },
+    header: () => <div className="text-center">Actions</div>,
+    cell: ({ row }) => <ActionDropdown userId={row.original.id} />,
+    enableSorting: false,
   },
 ];
 
+// --- Draggable Row ---
 function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
     id: row.original.id,
@@ -272,10 +355,7 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
       className={`border-b hover:bg-gray-50 ${
         row.getIsSelected() ? "bg-blue-50" : ""
       } ${isDragging ? "opacity-50 z-10" : ""}`}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition: transition,
-      }}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
     >
       {row.getVisibleCells().map((cell) => (
         <td key={cell.id} className="px-4 py-4">
@@ -286,76 +366,36 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   );
 }
 
-// Sample data
-const sampleData: z.infer<typeof schema>[] = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    orderCount: 15,
-    points: 2450,
-    status: "Active",
-    joinDate: "2023-01-15",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    phone: "+1 (555) 234-5678",
-    orderCount: 8,
-    points: 1200,
-    status: "Active",
-    joinDate: "2023-03-22",
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mike.j@example.com",
-    phone: "+1 (555) 345-6789",
-    orderCount: 23,
-    points: 3750,
-    status: "Active",
-    joinDate: "2022-11-08",
-  },
-  {
-    id: 4,
-    name: "Sarah Wilson",
-    email: "sarah.w@example.com",
-    phone: "+1 (555) 456-7890",
-    orderCount: 5,
-    points: 800,
-    status: "Pending",
-    joinDate: "2024-01-10",
-  },
-  {
-    id: 5,
-    name: "David Brown",
-    email: "d.brown@example.com",
-    phone: "+1 (555) 567-8901",
-    orderCount: 0,
-    points: 100,
-    status: "Inactive",
-    joinDate: "2023-08-15",
-  },
-  {
-    id: 6,
-    name: "Emily Davis",
-    email: "emily.davis@example.com",
-    phone: "+1 (555) 678-9012",
-    orderCount: 12,
-    points: 1850,
-    status: "Active",
-    joinDate: "2023-05-18",
-  },
-];
+// --- Main Component ---
+export function DataTable() {
+  const { data, isLoading } = useUsers();
+  const router = useRouter();
 
-export function DataTable({
-  data: initialData = sampleData,
-}: {
-  data?: z.infer<typeof schema>[];
-}) {
-  const [data, setData] = React.useState(() => initialData);
+  // ✅ Memoize the transformed users data to prevent infinite re-renders
+  const users = React.useMemo(() => {
+    if (!data?.users) return [];
+
+    return data.users.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.number, // API gives "number"
+      orderCount: 0, // placeholder until backend supports
+      points: 0, // placeholder
+      status: "Active", // default status
+      joinDate: u.created_at,
+    }));
+  }, [data?.users]);
+
+  const [tableData, setTableData] = React.useState<typeof users>([]);
+
+  // ✅ Fixed: Now users is memoized, so this won't cause infinite re-renders
+  React.useEffect(() => {
+    if (users.length > 0) {
+      setTableData(users);
+    }
+  }, [users]);
+
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -370,18 +410,18 @@ export function DataTable({
 
   const sortableId = React.useId();
   const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
+    useSensor(MouseSensor),
+    useSensor(TouchSensor),
+    useSensor(KeyboardSensor)
   );
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => data?.map(({ id }) => id) || [],
-    [data]
+    () => tableData.map(({ id }) => id),
+    [tableData]
   );
 
   const table = useReactTable({
-    data,
+    data: tableData,
     columns,
     state: {
       sorting,
@@ -408,207 +448,71 @@ export function DataTable({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (active && over && active.id !== over.id) {
-      setData((data) => {
+      setTableData((old) => {
         const oldIndex = dataIds.indexOf(active.id);
         const newIndex = dataIds.indexOf(over.id);
-        return arrayMove(data, oldIndex, newIndex);
+        return arrayMove(old, oldIndex, newIndex);
       });
     }
   }
 
-  const totalOrders = data.reduce((sum, user) => sum + user.orderCount, 0);
-  const totalPoints = data.reduce((sum, user) => sum + user.points, 0);
-  const activeUsers = data.filter((user) => user.status === "Active").length;
+  // ✅ Show skeleton loading state instead of plain text
+  if (isLoading) {
+    return <TableSkeleton />;
+  }
 
   return (
     <div className="w-full space-y-6 p-6 bg-gray-50 min-h-screen">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-100 p-2 rounded-lg">
-              <User className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold">{data.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="bg-green-100 p-2 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Active Users</p>
-              <p className="text-2xl font-bold">{activeUsers}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="bg-purple-100 p-2 rounded-lg">
-              <ShoppingBag className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Orders</p>
-              <p className="text-2xl font-bold">{totalOrders}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="bg-yellow-100 p-2 rounded-lg">
-              <Star className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Points</p>
-              <p className="text-2xl font-bold">
-                {totalPoints.toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Table Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <input
-            placeholder="Search users..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 gap-2">
-            <Columns className="h-4 w-4" />
-            Columns
-          </button>
-          <button className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 gap-2">
-            <Plus className="h-4 w-4" />
-            Add User
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
-        <DndContext
-          collisionDetection={closestCenter}
-          modifiers={[restrictToVerticalAxis]}
-          onDragEnd={handleDragEnd}
-          sensors={sensors}
-          id={sortableId}
-        >
-          <table className="w-full">
-            <thead className="bg-gray-50 sticky top-0">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="px-4 py-3 text-left text-sm font-medium text-gray-900"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows?.length ? (
-                <SortableContext
-                  items={dataIds}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {table.getRowModel().rows.map((row) => (
-                    <DraggableRow key={row.id} row={row} />
-                  ))}
-                </SortableContext>
-              ) : (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="h-24 text-center text-gray-500"
+      <DndContext
+        collisionDetection={closestCenter}
+        modifiers={[restrictToVerticalAxis]}
+        onDragEnd={handleDragEnd}
+        sensors={sensors}
+        id={sortableId}
+      >
+        <table className="w-full">
+          <thead className="bg-gray-50 sticky top-0">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className="px-4 py-3 text-left text-sm font-medium text-gray-900"
                   >
-                    No users found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </DndContext>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white rounded-lg border">
-        <div className="text-sm text-gray-700">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-700">Rows per page</label>
-            <select
-              value={table.getState().pagination.pageSize}
-              onChange={(e) => table.setPageSize(Number(e.target.value))}
-              className="h-8 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={30}>30</option>
-              <option value={40}>40</option>
-              <option value={50}>50</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-                className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows?.length ? (
+              <SortableContext
+                items={dataIds}
+                strategy={verticalListSortingStrategy}
               >
-                <ChevronsLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-                className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronsRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+                {table.getRowModel().rows.map((row) => (
+                  <DraggableRow key={row.id} row={row} />
+                ))}
+              </SortableContext>
+            ) : (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="h-24 text-center text-gray-500"
+                >
+                  No users found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </DndContext>
     </div>
   );
 }

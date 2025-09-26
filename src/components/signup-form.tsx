@@ -27,9 +27,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-interface SignUpFormProps extends React.ComponentProps<"div"> {}
-
-// Zod validation schema
+// --- Schema ---
 const signUpSchema = z
   .object({
     user_name: z
@@ -47,13 +45,6 @@ const signUpSchema = z
       .regex(/^\+?[\d\s\-\(\)\.]+$/, "Please enter a valid phone number")
       .min(10, "Phone number must be at least 10 digits"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    // .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    // .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    // .regex(/\d/, "Password must contain at least one number")
-    // .regex(
-    //   /[!@#$%^&*(),.?":{}|<>]/,
-    //   "Password must contain at least one special character"
-    // )
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -63,18 +54,21 @@ const signUpSchema = z
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
-interface PasswordValidation {
-  minLength: boolean;
-  hasUppercase: boolean;
-  hasLowercase: boolean;
-  hasNumber: boolean;
-  hasSpecialChar: boolean;
-}
+// --- Password validation helper ---
+const validatePassword = (password: string) => ({
+  minLength: password.length >= 8,
+  hasUppercase: /[A-Z]/.test(password),
+  hasLowercase: /[a-z]/.test(password),
+  hasNumber: /\d/.test(password),
+  hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+});
 
-export function SignUpForm({ className, ...props }: SignUpFormProps) {
+export function SignUpForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const registerMutation = useRegister();
 
@@ -87,68 +81,31 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       password: "",
       confirmPassword: "",
     },
-    mode: "onChange", // Real-time validation
+    mode: "onChange",
   });
 
   const password = form.watch("password");
   const confirmPassword = form.watch("confirmPassword");
-
-  const validatePassword = (password: string): PasswordValidation => ({
-    minLength: password.length >= 8,
-    hasUppercase: /[A-Z]/.test(password),
-    hasLowercase: /[a-z]/.test(password),
-    hasNumber: /\d/.test(password),
-    hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-  });
-
   const passwordValidation = validatePassword(password || "");
 
+  // --- Submit handler ---
   const onSubmit = async (userData: SignUpFormData) => {
     try {
-      const response = await fetch(
-        "https://monkey-1-jhiq.onrender.com/api/user/signup",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(userData),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        toast.error(errorData.message || "Signup failed");
-        throw new Error(errorData.message || "Signup failed");
-      }
-
-      const data = await response.json();
-      toast.success("Signup successful");
-      return data;
-    } catch (error) {
-      console.error("Signup error:", error);
-      toast.error("Signup failed");
-      throw error;
-    }
-  };
-
-  const handleSocialSignUp = async () => {
-    try {
-      setIsLoading(true);
-
-      // Show loading toast
-      toast.loading("Redirecting to Google...");
-
-      const redirectUrl = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
-      window.location.href = redirectUrl;
-    } catch (error) {
-      setIsLoading(false);
-      toast.error("Failed to redirect to Google", {
-        description: "Please try again or use email signup.",
+      await registerMutation.mutateAsync({
+        user_name: userData.user_name,
+        user_email: userData.user_email,
+        user_number: userData.user_number,
+        password: userData.password,
       });
+
+      toast.success("Signup successful 🎉");
+      // optional: redirect("/dashboard");
+    } catch (error: any) {
+      toast.error(error?.message || "Signup failed");
     }
   };
 
+  // --- Small UI component ---
   const PasswordRequirement = ({
     isValid,
     text,
@@ -173,44 +130,12 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>
-          <CardDescription>Sign up with your Google account</CardDescription>
+          <CardDescription>Sign up with your details below</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Google Sign Up Button */}
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full bg-transparent"
-                onClick={handleSocialSignUp}
-                disabled={isLoading || registerMutation.isPending}
-              >
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="mr-2 h-4 w-4"
-                  >
-                    <path
-                      d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                )}
-                Sign up with Google
-              </Button>
-
-              {/* Divider */}
-              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                <span className="bg-card text-muted-foreground relative z-10 px-2">
-                  Or continue with
-                </span>
-              </div>
-
-              {/* Full Name Field */}
+              {/* Name */}
               <FormField
                 control={form.control}
                 name="user_name"
@@ -220,7 +145,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                     <FormControl>
                       <Input
                         placeholder="John Doe"
-                        disabled={registerMutation.isPending || isLoading}
+                        disabled={registerMutation.isPending}
                         {...field}
                       />
                     </FormControl>
@@ -229,7 +154,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                 )}
               />
 
-              {/* Email Field */}
+              {/* Email */}
               <FormField
                 control={form.control}
                 name="user_email"
@@ -240,7 +165,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                       <Input
                         type="email"
                         placeholder="m@example.com"
-                        disabled={registerMutation.isPending || isLoading}
+                        disabled={registerMutation.isPending}
                         {...field}
                       />
                     </FormControl>
@@ -249,7 +174,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                 )}
               />
 
-              {/* Phone Number Field */}
+              {/* Phone */}
               <FormField
                 control={form.control}
                 name="user_number"
@@ -260,7 +185,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                       <Input
                         type="tel"
                         placeholder="+1 (555) 000-0000"
-                        disabled={registerMutation.isPending || isLoading}
+                        disabled={registerMutation.isPending}
                         {...field}
                       />
                     </FormControl>
@@ -269,7 +194,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                 )}
               />
 
-              {/* Password Field */}
+              {/* Password */}
               <FormField
                 control={form.control}
                 name="password"
@@ -281,7 +206,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                         type="button"
                         className="rounded-full h-8 w-8 flex items-center justify-center hover:bg-gray-100"
                         onClick={() => setShowPassword(!showPassword)}
-                        disabled={registerMutation.isPending || isLoading}
+                        disabled={registerMutation.isPending}
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4" />
@@ -293,13 +218,11 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                     <FormControl>
                       <Input
                         type={showPassword ? "text" : "password"}
-                        disabled={registerMutation.isPending || isLoading}
+                        disabled={registerMutation.isPending}
                         {...field}
                       />
                     </FormControl>
                     <FormMessage />
-
-                    {/* Password Requirements */}
                     {password && (
                       <div className="text-xs space-y-1 mt-2">
                         <PasswordRequirement
@@ -328,7 +251,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                 )}
               />
 
-              {/* Confirm Password Field */}
+              {/* Confirm Password */}
               {password && (
                 <FormField
                   control={form.control}
@@ -343,7 +266,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
-                          disabled={registerMutation.isPending || isLoading}
+                          disabled={registerMutation.isPending}
                         >
                           {showConfirmPassword ? (
                             <EyeOff className="w-4 h-4" />
@@ -356,13 +279,11 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                         <Input
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="Confirm your password"
-                          disabled={registerMutation.isPending || isLoading}
+                          disabled={registerMutation.isPending}
                           {...field}
                         />
                       </FormControl>
                       <FormMessage />
-
-                      {/* Password Match Indicator */}
                       {confirmPassword && (
                         <div className="flex items-center gap-2 text-xs mt-2">
                           {password === confirmPassword ? (
@@ -387,15 +308,11 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                 />
               )}
 
-              {/* Submit Button */}
+              {/* Submit */}
               <Button
                 type="submit"
                 className="w-full"
-                disabled={
-                  registerMutation.isPending ||
-                  isLoading ||
-                  !form.formState.isValid
-                }
+                disabled={registerMutation.isPending || !form.formState.isValid}
               >
                 {registerMutation.isPending ? (
                   <>
@@ -407,7 +324,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                 )}
               </Button>
 
-              {/* Login Link */}
+              {/* Login link */}
               <div className="text-center text-sm">
                 Already have an account?{" "}
                 <Link
@@ -421,25 +338,6 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
           </Form>
         </CardContent>
       </Card>
-
-      {/* Terms and Privacy */}
-      <div className="text-muted-foreground text-center text-xs text-balance">
-        By clicking continue, you agree to our{" "}
-        <Link
-          href="/terms"
-          className="underline underline-offset-4 hover:text-primary"
-        >
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link
-          href="/privacy"
-          className="underline underline-offset-4 hover:text-primary"
-        >
-          Privacy Policy
-        </Link>
-        .
-      </div>
     </div>
   );
 }

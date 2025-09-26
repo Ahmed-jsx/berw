@@ -1,0 +1,566 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  ArrowLeft,
+  Minus,
+  Plus,
+  X,
+  ShoppingCart,
+  Loader2,
+  CheckCircle,
+  Clock,
+  MapPin,
+  Trash,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useOrderStore } from "@/store/orderStore";
+import { useCheckoutProcess } from "@/query/useOrderQueries";
+import { useAuthStore } from "@/store/auth-store";
+import { CheckoutResponse } from "@/types/order";
+
+export function CheckoutSection() {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const {
+    cartItems,
+    updateCartItemQuantity,
+    removeFromCart,
+    clearCart,
+    getCartTotalPrice,
+    getCartItemsCount,
+  } = useOrderStore();
+
+  const { checkout, isCheckingOut, checkoutError } = useCheckoutProcess();
+
+  const [redeemPoints, setRedeemPoints] = useState("");
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<CheckoutResponse | null>(
+    null
+  );
+
+  // Calculate totals
+  const subtotal = useMemo(() => getCartTotalPrice(), [cartItems]);
+  const tax = useMemo(() => Math.round(subtotal * 0.14), [subtotal]); // 14% tax
+  const pointsDiscount = useMemo(() => {
+    const points = parseInt(redeemPoints) || 0;
+    return Math.min(points * 0.1, subtotal); // 1 point = 0.1 EGP, max discount = subtotal
+  }, [redeemPoints, subtotal]);
+  const total = subtotal + tax - pointsDiscount;
+
+  // Handle quantity updates
+  const handleQuantityChange = (productId: number, change: number) => {
+    const item = cartItems.find((item) => item.product_id === productId);
+    if (!item) return;
+
+    const newQuantity = item.quantity + change;
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+      toast.success("Item removed from cart");
+    } else {
+      updateCartItemQuantity(productId, newQuantity);
+    }
+  };
+
+  // Handle item removal
+  const handleRemoveItem = (productId: number) => {
+    const item = cartItems.find((item) => item.product_id === productId);
+    removeFromCart(productId);
+    toast.success(`${item?.product_name || "Item"} removed from cart`);
+  };
+
+  // Handle points redemption
+  const handleRedeemPoints = () => {
+    const points = parseInt(redeemPoints);
+    if (!points || points <= 0) {
+      toast.error("Please enter valid points amount");
+      return;
+    }
+
+    if (points > (user?.points || 0)) {
+      toast.error("Insufficient points balance");
+      return;
+    }
+
+    setIsRedeeming(true);
+    // Simulate redemption delay
+    setTimeout(() => {
+      setIsRedeeming(false);
+      toast.success(`${points} points redeemed successfully!`);
+    }, 1000);
+  };
+
+  // Handle checkout
+  const handleCheckout = async () => {
+    if (!isAuthenticated || !user) {
+      toast.error("Please login to continue");
+      router.push("/login");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty");
+      return;
+    }
+
+    try {
+      // Convert cart items to checkout format
+      const checkoutItems = cartItems.map((item) => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        extras: item.extras || [],
+      }));
+
+      const result = await checkout(user.id, checkoutItems);
+
+      // Set order confirmation details
+      setOrderDetails({
+        orderId:
+          result?.order_id ||
+          Math.random().toString(36).substr(2, 9).toUpperCase(),
+        orderNumber: `#${Date.now().toString().slice(-6)}`,
+        estimatedTime: "15-20 minutes",
+        total: total,
+        itemCount: getCartItemsCount(),
+      });
+
+      toast.success("Order placed successfully!");
+      clearCart();
+      setOrderConfirmed(true);
+    } catch (error) {
+      toast.error(checkoutError || "Failed to place order");
+    }
+  };
+
+  // Order Confirmation UI
+  if (orderConfirmed && orderDetails) {
+    return (
+      <div className="min-h-screen max-w-[calc(100vw-6rem)] my-8 mx-auto rounded-[40px] bg-secondary p-6 pt-40">
+        <div className="max-w-2xl mx-auto">
+          {/* Success Header */}
+          <div className="text-center mb-8">
+            <div className="bg-green-500 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <CheckCircle className="h-12 w-12 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Order Confirmed!
+            </h1>
+            <p className="text-white/70 text-lg">
+              Thank you for your order. We're preparing it now.
+            </p>
+          </div>
+
+          {/* Order Details Card */}
+          <Card className="p-8 bg-white/10 border-0 rounded-3xl mb-6">
+            <div className="space-y-6">
+              {/* Order Info */}
+              <div className="flex justify-between items-center border-b border-white/20 pb-4">
+                <div>
+                  <h3 className="text-white font-semibold text-lg">
+                    Order Details
+                  </h3>
+                  <p className="text-white/70">Order {orderDetails.order_id}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-white">
+                    {orderDetails.total_price} EGP
+                  </p>
+                  <p className="text-white/70">
+                    {orderDetails.itemCount} items
+                  </p>
+                </div>
+              </div>
+
+              {/* Estimated Time */}
+              <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-4">
+                <div className="bg-primary rounded-full p-3">
+                  <Clock className="h-6 w-6 text-primary-foreground" />
+                </div>
+                {/* <div>
+                  <h4 className="text-white font-medium">
+                    Estimated Preparation Time
+                  </h4>
+                  <p className="text-white/70">{orderDetails.}</p>
+                </div> */}
+              </div>
+
+              {/* Pickup Location */}
+              <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-4">
+                <div className="bg-primary rounded-full p-3">
+                  <MapPin className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h4 className="text-white font-medium">Pickup Location</h4>
+                  <p className="text-white/70">
+                    Main Counter - Show this confirmation
+                  </p>
+                </div>
+              </div>
+
+              {/* Order ID for Reference */}
+              <div className="bg-white rounded-2xl p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium text-gray-900">Order ID</h4>
+                    <p className="text-gray-600">
+                      Keep this for your reference
+                    </p>
+                  </div>
+                  <div className="bg-gray-100 rounded-lg px-4 py-2">
+                    <span className="font-mono font-bold text-lg text-gray-900">
+                      {orderDetails.order_code}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link href="/orders">
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 rounded-full">
+                  View Order Status
+                </Button>
+              </Link>
+              <Link href="/menu">
+                <Button
+                  variant="outline"
+                  className="w-full bg-white/10 text-white border-white/30 hover:bg-white/20 py-3 rounded-full"
+                >
+                  Order More
+                </Button>
+              </Link>
+            </div>
+
+            <Link href="/">
+              <Button
+                variant="ghost"
+                className="w-full text-white/70 hover:text-white hover:bg-white/10 py-3 rounded-full"
+              >
+                Back to Home
+              </Button>
+            </Link>
+          </div>
+
+          {/* Additional Info */}
+          <div className="mt-8 text-center">
+            <p className="text-white/60 text-sm leading-relaxed">
+              You will receive a notification when your order is ready for
+              pickup.
+              <br />
+              Need help? Contact us at support@restaurant.com
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty cart state
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-screen max-w-[calc(100vw-6rem)] my-8 mx-auto rounded-[40px] bg-secondary p-6 pt-40">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="bg-white/10 rounded-full p-8 mb-6">
+            <ShoppingCart className="h-16 w-16 text-white/60" />
+          </div>
+          <h2 className="text-2xl font-semibold text-white mb-4">
+            Your cart is empty
+          </h2>
+          <p className="text-white/70 mb-8 max-w-md">
+            Looks like you haven't added any items to your cart yet. Explore our
+            menu and find something delicious!
+          </p>
+          <Link href="/menu">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-full">
+              Explore Menu
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen max-w-[calc(100vw-6rem)] my-8 mx-auto rounded-[40px] bg-secondary p-6 pt-40">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-secondary-foreground hover:bg-secondary-foreground/10"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-semibold text-secondary-foreground">
+              Check Out
+            </h1>
+            <p className="text-white/70 text-sm">
+              {getCartItemsCount()} items in your cart
+            </p>
+          </div>
+        </div>
+
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-full disabled:opacity-50"
+          onClick={handleCheckout}
+          disabled={isCheckingOut || cartItems.length === 0}
+        >
+          {isCheckingOut ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            "Confirm Order"
+          )}
+        </Button>
+      </div>
+
+      {/* Error Display */}
+      {checkoutError && (
+        <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200 text-sm">
+          {checkoutError}
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Order Details */}
+        <Card className="p-6 bg-white/10 border-0 rounded-3xl">
+          <h2 className="text-lg font-medium text-white mb-4">
+            Order Details ({cartItems.length} items)
+          </h2>
+
+          <div className="space-y-4 mb-6">
+            {cartItems.map((item) => (
+              <div
+                key={`${item.product_id}`}
+                className="bg-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
+              >
+                {/* Product Image */}
+                <div className="relative w-20 h-20 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-100 mx-auto sm:mx-0">
+                  <Image
+                    src={item.product_photo || "/bg1.png"}
+                    alt={item.product_name || "Product"}
+                    fill
+                    className="object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/bg1.png";
+                    }}
+                  />
+                </div>
+
+                {/* Product Info + Remove Button */}
+                <div className="flex-1 w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="text-center sm:text-left">
+                      <h3 className="font-medium text-gray-900 break-words">
+                        {item.product_name || "Unknown Product"}
+                      </h3>
+                      <p className="text-primary font-semibold mt-1">
+                        {item.product_price || 0} EGP
+                      </p>
+                      {item.product_category && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {item.product_category}
+                        </p>
+                      )}
+                      {item.extras && item.extras.length > 0 && (
+                        <div className="flex flex-wrap justify-center sm:justify-start gap-1 mt-2">
+                          {item.extras.map((extraId, index) => (
+                            <span
+                              key={index}
+                              className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600"
+                            >
+                              Extra #{extraId}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="self-end sm:self-auto size-8 text-gray-400 hover:text-gray-600"
+                      onClick={() => handleRemoveItem(item.product_id)}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Quantity Controls */}
+                <div className="flex justify-center sm:justify-end items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full border-gray-300 bg-transparent hover:bg-gray-50"
+                    onClick={() => handleQuantityChange(item.product_id, -1)}
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <span className="w-8 text-center font-medium">
+                    {item.quantity}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full border-gray-300 bg-transparent hover:bg-gray-50"
+                    onClick={() => handleQuantityChange(item.product_id, 1)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Link href="/explore">
+            <Button className="w-full bg-secondary/90 text-secondary-foreground hover:bg-secondary-foreground/30 rounded-full py-3">
+              Add More Items
+            </Button>
+          </Link>
+        </Card>
+
+        {/* Payment */}
+        <Card className="p-6 bg-white/10 border-0 rounded-3xl">
+          <h2 className="text-lg font-medium text-white mb-4">
+            Payment Summary
+          </h2>
+
+          <div className="space-y-4 mb-6">
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">Subtotal</span>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-white">
+                  {subtotal.toFixed(2)}
+                </span>
+                <span className="text-white/70">EGP</span>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">Tax (14%)</span>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-white">
+                  {tax.toFixed(2)}
+                </span>
+                <span className="text-white/70">EGP</span>
+              </div>
+            </div>
+
+            {pointsDiscount > 0 && (
+              <div className="flex justify-between items-center text-green-400">
+                <span>Points Discount</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">
+                    -{pointsDiscount.toFixed(2)}
+                  </span>
+                  <span className="text-green-400/70">EGP</span>
+                </div>
+              </div>
+            )}
+
+            <hr className="border-white/20" />
+
+            <div className="flex justify-between items-center">
+              <span className="text-white font-medium">Total</span>
+              <div className="flex items-center gap-2">
+                <span className="text-3xl font-bold text-white">
+                  {total.toFixed(2)}
+                </span>
+                <span className="text-white/70">EGP</span>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-sm text-white/70 mb-6 leading-relaxed">
+            Your order will be prepared fresh and you'll receive a confirmation
+            with pickup details.
+          </p>
+
+          {/* Points Redemption */}
+          {isAuthenticated && user?.points && user.points > 0 && (
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-white font-medium">Redeem Points</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-white">Available</span>
+                  <span className="bg-primary/40 text-primary-foreground rounded-full px-2 py-1 text-xs font-medium">
+                    {user.points} Points
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    value={redeemPoints}
+                    onChange={(e) => setRedeemPoints(e.target.value)}
+                    className="flex-1 bg-white py-4 border-0 rounded-xl"
+                    placeholder="Enter points to redeem"
+                    max={user.points}
+                    min="0"
+                  />
+                  <Button
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 rounded-xl disabled:opacity-50"
+                    onClick={handleRedeemPoints}
+                    disabled={
+                      isRedeeming ||
+                      !redeemPoints ||
+                      parseInt(redeemPoints) <= 0
+                    }
+                  >
+                    {isRedeeming ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Redeem"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-white/60">
+                  1 point = 0.1 EGP discount
+                </p>
+              </div>
+            </div>
+          )}
+
+          {pointsDiscount > 0 && (
+            <p className="text-center text-green-400 mb-4">
+              You're saving{" "}
+              <span className="font-semibold">
+                {pointsDiscount.toFixed(2)} EGP
+              </span>{" "}
+              with points!
+            </p>
+          )}
+
+          {!isAuthenticated && (
+            <div className="text-center text-white/70 mb-4">
+              <Link href="/login" className="text-primary hover:underline">
+                Login
+              </Link>{" "}
+              to redeem points and track your order
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -11,11 +11,11 @@ const images = [
 
 const Cta = () => {
   return (
-    <section className="w-full py-24 max-w-[calc(100vw-6rem)] mx-auto">
+    <section className="w-full py-24 max-w-[calc(100vw-4rem)] mx-auto">
       <div className="w-full rounded-default bg-secondary">
-        <div className=" flex items-center  max-w-[1220px] mx-auto py-12 justify-between">
+        <div className=" flex items-center px-6 max-w-[1220px] mx-auto py-12 justify-between">
           <div className="flex flex-col gap-6 items-start">
-            <h2 className="text-5xl max-w-[700px] leading-1.2 font-bold text-white">
+            <h2 className="lg:text-5xl text-3xl  max-w-[700px] leading-1.2 font-bold text-white">
               Let&apos;s turn every coffee bean into a Reward!
             </h2>
             <p className="text-white/90 max-w-[700px]">
@@ -26,7 +26,7 @@ const Cta = () => {
               Explore Monkey Rewards
             </Button>
           </div>
-          <div className="flex gap-4 flex-wrap justify-center">
+          <div className="lg:flex hidden gap-4 flex-wrap justify-center">
             {images.map((image, index) => (
               <Image key={index} {...image} />
             ))}

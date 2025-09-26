@@ -22,11 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html suppressHydrationWarning lang="en">
-      <body
-        className={`${montserrat.className} antialiased flex flex-col min-h-screen`}
-      >
+      <body className={`${montserrat.className} antialiased flex flex-col `}>
         <Providers>
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 min-h-full">{children}</main>
           <Toaster position="bottom-right" richColors />
         </Providers>
       </body>

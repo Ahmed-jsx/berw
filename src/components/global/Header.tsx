@@ -123,15 +123,6 @@ const Header = () => {
                         Menu
                       </span>
                     </SheetTitle>
-                    <SheetClose asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-white hover:bg-white/20 rounded-lg"
-                      >
-                        <X className="size-4" />
-                      </Button>
-                    </SheetClose>
                   </div>
                 </SheetHeader>
 

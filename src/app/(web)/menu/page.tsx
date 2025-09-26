@@ -158,23 +158,13 @@ const MenuPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="relative bg-secondary text-white py-16 px-6">
+      <div className="relative bg-secondary text-white pt-48 pb-16 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">Our Menu</h1>
           <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
             Discover our carefully crafted dishes made with the finest
             ingredients
           </p>
-
-          {/* Cart Button */}
-          {getCartItemsCount() > 0 && (
-            <Link href="/check-out">
-              <Button className="fixed top-6 right-6 z-50 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 py-3 shadow-lg">
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Cart ({getCartItemsCount()})
-              </Button>
-            </Link>
-          )}
         </div>
       </div>
 

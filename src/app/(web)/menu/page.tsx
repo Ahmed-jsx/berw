@@ -170,30 +170,6 @@ const MenuPage = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Featured Products Section */}
-        {featuredProducts.length > 0 && (
-          <section className="mb-16">
-            <div className="flex items-center gap-3 mb-8">
-              <Star className="h-6 w-6 text-primary" />
-              <h2 className="text-3xl font-bold text-foreground">
-                Featured Items
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredProducts.map((product) => (
-                <ItemCard
-                  key={product.product_id}
-                  id={product.product_id}
-                  name={product.product_name}
-                  description={product.product_components}
-                  price={parseFloat(product.product_price)}
-                  image={product.product_photo}
-                  isFeatured={product.is_featured}
-                  onOrder={() => handleAddToCart(product)}
-                />
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* Search and Filter Section */}
         <Card className="p-6 mb-8 bg-card border border-border">
@@ -265,6 +241,30 @@ const MenuPage = () => {
             );
           })}
         </div>
+        {featuredProducts.length > 0 && (
+          <section className="mb-16">
+            <div className="flex items-center gap-3 mb-8">
+              <Star className="h-6 w-6 text-primary" />
+              <h2 className="text-3xl font-bold text-foreground">
+                Featured Items
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredProducts.map((product) => (
+                <ItemCard
+                  key={product.product_id}
+                  id={product.product_id}
+                  name={product.product_name}
+                  description={product.product_components}
+                  price={parseFloat(product.product_price)}
+                  image={product.product_photo}
+                  isFeatured={product.is_featured}
+                  onOrder={() => handleAddToCart(product)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Products Grid */}
         <section>

@@ -165,9 +165,9 @@ function SingleProductPage({ params }: PageProps) {
 
   return (
     <>
-      <main className="min-h-screen max-w-7xl my-8 mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen lg:max-w-[calc(100vw-6rem)] lg:my-8  lg:mx-auto max-w-full lg:rounded-[40px] relative overflow-hidden">
         {/* Hero Section */}
-        <section className="relative min-h-[70vh] rounded-default overflow-hidden">
+        <section className="relative min-h-[80vh] pt-20 rounded-default overflow-hidden">
           {/* Background */}
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -183,7 +183,7 @@ function SingleProductPage({ params }: PageProps) {
           </div>
 
           {/* Content */}
-          <div className="relative z-10 flex items-center min-h-[70vh] px-4 md:px-12">
+          <div className="relative z-10 flex items-center min-h-[75vh] px-4 md:px-12">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center w-full">
               {/* Left - Product image */}
               <div className="flex justify-center">
@@ -210,7 +210,7 @@ function SingleProductPage({ params }: PageProps) {
               {/* Right - Product info */}
               <div className="text-white space-y-6">
                 <div>
-                  <h1 className="text-3xl md:text-5xl font-bold mb-4">
+                  <h1 className="text-3xl md:text-5xl font-bold mb-6">
                     {product.product_name}
                   </h1>
                   <div className="bg-secondary/80 backdrop-blur-md rounded-full px-4 py-2 inline-block">
@@ -283,7 +283,7 @@ function SingleProductPage({ params }: PageProps) {
       </main>
 
       {/* Extras and Notes */}
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-8">
             <h2 className="text-2xl md:text-4xl font-bold text-foreground">

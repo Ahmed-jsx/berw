@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,9 @@ import {
   ArrowLeft,
   Minus,
   Plus,
-  X,
   ShoppingCart,
   Loader2,
   CheckCircle,
-  Clock,
-  MapPin,
   Trash,
 } from "lucide-react";
 import Image from "next/image";
@@ -37,7 +34,14 @@ export function CheckoutSection() {
     getCartItemsCount,
   } = useOrderStore();
 
-  const { checkout, isCheckingOut, checkoutError } = useCheckoutProcess();
+  const {
+    checkout,
+    isCheckingOut,
+    checkoutError,
+    checkoutData,
+    isSuccess,
+    reset,
+  } = useCheckoutProcess();
 
   const [redeemPoints, setRedeemPoints] = useState("");
   const [isRedeeming, setIsRedeeming] = useState(false);
@@ -46,14 +50,42 @@ export function CheckoutSection() {
     null
   );
 
+  // Watch for successful checkout
+  useEffect(() => {
+    if (isSuccess && checkoutData) {
+      // Convert total_price to number if it's a string
+      const totalPrice =
+        typeof checkoutData.total_price === "string"
+          ? parseFloat(checkoutData.total_price)
+          : checkoutData.total_price;
+
+      setOrderDetails({
+        message: checkoutData.message,
+        order_id: checkoutData.order_id,
+        order_code: checkoutData.order_code,
+        total_price: totalPrice,
+      });
+
+      toast.success("Order placed successfully!");
+      setOrderConfirmed(true);
+      reset(); // Reset mutation state
+    }
+  }, [isSuccess, checkoutData, reset]);
+
+  // Watch for checkout errors
+  useEffect(() => {
+    if (checkoutError) {
+      toast.error(checkoutError);
+    }
+  }, [checkoutError]);
+
   // Calculate totals
   const subtotal = useMemo(() => getCartTotalPrice(), [cartItems]);
-  const tax = useMemo(() => Math.round(subtotal * 0.14), [subtotal]); // 14% tax
   const pointsDiscount = useMemo(() => {
     const points = parseInt(redeemPoints) || 0;
     return Math.min(points * 0.1, subtotal); // 1 point = 0.1 EGP, max discount = subtotal
   }, [redeemPoints, subtotal]);
-  const total = subtotal + tax - pointsDiscount;
+  const total = subtotal - pointsDiscount;
 
   // Handle quantity updates
   const handleQuantityChange = (productId: number, change: number) => {
@@ -98,7 +130,7 @@ export function CheckoutSection() {
   };
 
   // Handle checkout
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!isAuthenticated || !user) {
       toast.error("Please login to continue");
       router.push("/login");
@@ -110,33 +142,15 @@ export function CheckoutSection() {
       return;
     }
 
-    try {
-      // Convert cart items to checkout format
-      const checkoutItems = cartItems.map((item) => ({
-        product_id: item.product_id,
-        quantity: item.quantity,
-        extras: item.extras || [],
-      }));
+    // Convert cart items to checkout format
+    const checkoutItems = cartItems.map((item) => ({
+      product_id: item.product_id,
+      quantity: item.quantity,
+      extras: item.extras || [],
+    }));
 
-      const result = await checkout(user.id, checkoutItems);
-
-      // Set order confirmation details
-      setOrderDetails({
-        orderId:
-          result?.order_id ||
-          Math.random().toString(36).substr(2, 9).toUpperCase(),
-        orderNumber: `#${Date.now().toString().slice(-6)}`,
-        estimatedTime: "15-20 minutes",
-        total: total,
-        itemCount: getCartItemsCount(),
-      });
-
-      toast.success("Order placed successfully!");
-      clearCart();
-      setOrderConfirmed(true);
-    } catch (error) {
-      toast.error(checkoutError || "Failed to place order");
-    }
+    // Call checkout - it will handle success/error via the mutation callbacks
+    checkout(user.id, checkoutItems);
   };
 
   // Order Confirmation UI
@@ -166,49 +180,22 @@ export function CheckoutSection() {
                   <h3 className="text-white font-semibold text-lg">
                     Order Details
                   </h3>
-                  <p className="text-white/70">Order {orderDetails.order_id}</p>
+                  <p className="text-white/70">
+                    Order #{orderDetails.order_id}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-white">
-                    {orderDetails.total_price} EGP
-                  </p>
-                  <p className="text-white/70">
-                    {orderDetails.itemCount} items
+                    {orderDetails.total_price.toFixed(2)} EGP
                   </p>
                 </div>
               </div>
 
-              {/* Estimated Time */}
-              <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-4">
-                <div className="bg-primary rounded-full p-3">
-                  <Clock className="h-6 w-6 text-primary-foreground" />
-                </div>
-                {/* <div>
-                  <h4 className="text-white font-medium">
-                    Estimated Preparation Time
-                  </h4>
-                  <p className="text-white/70">{orderDetails.}</p>
-                </div> */}
-              </div>
-
-              {/* Pickup Location */}
-              <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-4">
-                <div className="bg-primary rounded-full p-3">
-                  <MapPin className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <h4 className="text-white font-medium">Pickup Location</h4>
-                  <p className="text-white/70">
-                    Main Counter - Show this confirmation
-                  </p>
-                </div>
-              </div>
-
-              {/* Order ID for Reference */}
+              {/* Order Code for Reference */}
               <div className="bg-white rounded-2xl p-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h4 className="font-medium text-gray-900">Order ID</h4>
+                    <h4 className="font-medium text-gray-900">Order Code</h4>
                     <p className="text-gray-600">
                       Keep this for your reference
                     </p>
@@ -225,16 +212,11 @@ export function CheckoutSection() {
 
           {/* Action Buttons */}
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Link href="/orders">
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 rounded-full">
-                  View Order Status
-                </Button>
-              </Link>
+            <div className="grid grid-cols-1  gap-4">
               <Link href="/menu">
                 <Button
                   variant="outline"
-                  className="w-full bg-white/10 text-white border-white/30 hover:bg-white/20 py-3 rounded-full"
+                  className="w-full bg-primary text-white border-white/30 hover:bg-primary/90 py-3 rounded-full"
                 >
                   Order More
                 </Button>
@@ -353,7 +335,7 @@ export function CheckoutSection() {
                 {/* Product Image */}
                 <div className="relative w-20 h-20 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-100 mx-auto sm:mx-0">
                   <Image
-                    src={item.product_photo || "/bg1.png"}
+                    src="/bg1.png"
                     alt={item.product_name || "Product"}
                     fill
                     className="object-cover"
@@ -430,7 +412,7 @@ export function CheckoutSection() {
             ))}
           </div>
 
-          <Link href="/explore">
+          <Link href="/menu">
             <Button className="w-full bg-secondary/90 text-secondary-foreground hover:bg-secondary-foreground/30 rounded-full py-3">
               Add More Items
             </Button>
@@ -449,16 +431,6 @@ export function CheckoutSection() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold text-white">
                   {subtotal.toFixed(2)}
-                </span>
-                <span className="text-white/70">EGP</span>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <span className="text-white/70">Tax (14%)</span>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-white">
-                  {tax.toFixed(2)}
                 </span>
                 <span className="text-white/70">EGP</span>
               </div>

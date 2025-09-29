@@ -69,7 +69,6 @@ const Header = () => {
 
           {/* Right Section - Always visible items */}
           <div className="flex items-center gap-6">
-            {/* Cart - Always visible when authenticated */}
             {isAuthenticated && (
               <div className="shrink-0">
                 <CartButton />

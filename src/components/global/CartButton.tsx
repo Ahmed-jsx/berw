@@ -12,6 +12,7 @@ import {
 import { useOrderStore } from "@/store/orderStore";
 import { Card } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
+import Link from "next/link";
 
 export default function CartButton() {
   const [open, setOpen] = useState(false);
@@ -24,11 +25,11 @@ export default function CartButton() {
       <SheetTrigger asChild>
         <Button
           variant="outline"
-          className="relative rounded-full px-6 py-3 flex items-center gap-3 backdrop-blur-md bg-white/20 border-white/30 shadow-lg hover:bg-white/30 transition-all duration-200"
+          className="relative rounded-full p-3 flex items-center  backdrop-blur-md bg-white/20 border-white/30 shadow-lg hover:bg-white/30 transition-all duration-200"
         >
           <span className="font-medium">Cart</span>
           {cartItems.length > 0 && (
-            <span className="rounded-full bg-primary text-white px-3 py-1 text-sm font-semibold shadow-md">
+            <span className="rounded-full bg-primary absolute -top-3 -right-4 text-white px-3 py-1 text-sm font-semibold shadow-md">
               {cartItems.length}
             </span>
           )}
@@ -159,9 +160,11 @@ export default function CartButton() {
                 ${getCartTotalPrice().toFixed(2)}
               </span>
             </div>
-            <Button className="w-full rounded-2xl text-lg py-6 backdrop-blur-md bg-primary/90 hover:bg-primary shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02]">
-              Proceed to Checkout
-            </Button>
+            <Link href={"/check-out"}>
+              <Button className="w-full rounded-2xl text-lg py-6 backdrop-blur-md bg-primary/90 hover:bg-primary shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02]">
+                Proceed to Checkout
+              </Button>
+            </Link>
           </div>
         )}
       </SheetContent>

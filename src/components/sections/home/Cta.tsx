@@ -3,10 +3,10 @@ import Image from "next/image";
 import React from "react";
 
 const images = [
-  { src: "/cta/1.png", alt: "Coffee beans" },
-  { src: "/cta/2.png", alt: "Coffee cup" },
-  { src: "/cta/3.png", alt: "Coffee bag" },
-  { src: "/cta/4.png", alt: "Coffee plant" },
+  { src: "/yellow-monkey.png", alt: "Coffee beans" },
+  { src: "/yellow-monkey.png", alt: "Coffee cup" },
+  { src: "/yellow-monkey.png", alt: "Coffee bag" },
+  { src: "/yellow-monkey.png", alt: "Coffee plant" },
 ].map((image) => ({ ...image, width: 230, height: 150 }));
 
 const Cta = () => {

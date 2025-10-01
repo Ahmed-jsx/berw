@@ -49,7 +49,6 @@ export function ExploreCoffee() {
     }
   }, [categories, active, setActive]);
 
-  // ✅ Filter products - show all if no active category or category doesn't exist
   const visible = useMemo(() => {
     if (!products) return [];
     if (!active || !categories.find((c) => c.value === active)) {

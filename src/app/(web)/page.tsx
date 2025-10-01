@@ -18,15 +18,14 @@ const Home = () => {
     <section className="w-full">
       <Hero />
 
-      <FeaturedItems />
-
       <section className="max-w-[1220px] py-24 mx-auto">
+        <FeaturedItems />
         <SectionHeader title="Explore the Coffee World" />
         <ExploreCoffee />
       </section>
       <Cta />
       <AnimatedSlider />
-      <div className="py-24">
+      <div className=" max-w-[1220px] px-8 lg:px-0 py-24 mx-auto">
         <ContactForm />
       </div>
     </section>

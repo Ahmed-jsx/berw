@@ -6,7 +6,9 @@ interface AuthState {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
+  role: "user" | "admin" | null;
   setAuth: (token: string, user: User) => void;
+  setRole: (role: string) => void;
   clearAuth: () => void;
 }
 
@@ -16,13 +18,14 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       isAuthenticated: false,
-
+      role: null,
       setAuth: (token, user) =>
-        set({ token, user, isAuthenticated: true }),
+      set({ token, user, isAuthenticated: true }), 
+      setRole: (role) => set({ role: role === "admin" ? "admin" : "user" }),
 
       clearAuth: () =>
         set({ token: null, user: null, isAuthenticated: false }),
     }),
-    { name: "auth-storage" } // saves to localStorage
+    { name: "auth-storage" } 
   )
 );

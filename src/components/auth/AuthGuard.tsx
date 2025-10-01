@@ -1,35 +1,64 @@
 "use client";
+
 import { useAuthStore } from "@/store/auth-store";
-import { redirect, usePathname } from "next/navigation";
-import React from "react";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-  const isPublicPath = ["/login", "/sign-up"].includes(pathname);
-  const isProtectedPath = ["/dashboard"].includes(pathname);
+  const router = useRouter();
+  const [isChecking, setIsChecking] = useState(true);
 
-  // ✅ Select each field directly (prevents infinite loop)
+  // Select auth state
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const user = useAuthStore((s) => s.user);
+  const role = useAuthStore((s) => s.role);
 
-  // ✅ Bypass all checks in development
-  if (process.env.NODE_ENV === "development") {
-    return <>{children}</>;
-  }
+  // Define public paths
+  const publicPaths = ["/login", "/sign-up"];
+  const isPublicPath = publicPaths.includes(pathname);
+  const isAdmin = role === "admin";
 
-  // If not authenticated → always send to login
-  if (!isAuthenticated && !isPublicPath) {
-    redirect("/login");
-  }
+  useEffect(() => {
+    // Bypass in development
+    if (process.env.NODE_ENV === "development") {
+      setIsChecking(false);
+      return;
+    }
 
-  // If authenticated but trying to access public (auth) pages → send to dashboard
-  if (isAuthenticated && isPublicPath) {
-    redirect("/dashboard");
-  }
+    // Determine redirect logic
+    let redirectTo: string | null = null;
 
-  // If route is protected and user is not admin → send home
-  if (isAuthenticated && isProtectedPath && user?.role !== "admin") {
-    redirect("/");
+    if (!isAuthenticated && !isPublicPath) {
+      // Not authenticated and trying to access protected route → login
+      redirectTo = "/login";
+    } else if (isAuthenticated && isPublicPath) {
+      // Authenticated user trying to access auth pages → redirect based on role
+      redirectTo = isAdmin ? "/dashboard" : "/me";
+    } else if (
+      isAuthenticated &&
+      !isAdmin &&
+      !isPublicPath &&
+      pathname !== "/me" &&
+      pathname !== "/"
+    ) {
+      // Non-admin trying to access admin routes → redirect to user home
+      redirectTo = "/me";
+    }
+
+    if (redirectTo) {
+      router.replace(redirectTo);
+    } else {
+      setIsChecking(false);
+    }
+  }, [isAuthenticated, isAdmin, isPublicPath, pathname, router]);
+
+  // Show loading state while checking auth
+  if (isChecking && process.env.NODE_ENV !== "development") {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
+      </div>
+    );
   }
 
   return <>{children}</>;

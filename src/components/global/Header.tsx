@@ -78,7 +78,7 @@ const Header = () => {
             {/* Desktop User Menu / Login Button */}
             <div className="hidden sm:flex items-center">
               {isAuthenticated ? (
-                <Link href="/dashboard">
+                <Link href={user?.role === "admin" ? "/dashboard" : "/me"}>
                   <div className="bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm flex items-center gap-3 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95">
                     <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full p-1.5 shadow-lg">
                       <User className="size-4 text-black" />
@@ -153,7 +153,10 @@ const Header = () => {
                       {isAuthenticated ? (
                         <div className="space-y-3">
                           {/* Mobile User Profile */}
-                          <Link href="/dashboard" onClick={handleLinkClick}>
+                          <Link
+                            href={user?.role === "admin" ? "/dashboard" : "/me"}
+                            onClick={handleLinkClick}
+                          >
                             <div className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 border border-white/20">
                               <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full p-2 shadow-lg shrink-0">
                                 <User className="size-5 text-black" />
@@ -188,7 +191,7 @@ const Header = () => {
       {/* Mobile User Section - Only show on small screens when authenticated */}
       {isAuthenticated && (
         <div className="sm:hidden mt-3">
-          <Link href="/dashboard">
+          <Link href={user?.role === "admin" ? "/dashboard" : "/me"}>
             <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-2xl px-4 py-3 shadow-xl">
               <div className="flex items-center gap-3 text-white">
                 <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full p-2 shadow-lg">

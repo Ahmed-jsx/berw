@@ -13,7 +13,7 @@ const FeaturedItems = () => {
   return (
     <>
       {ItemsHaveFeatured ? (
-        <section className="max-w-[1220px] py-24 mx-auto">
+        <section className="max-w-[1220px] px-8 lg:px-0 py-24 mx-auto">
           <SectionHeader title="Explore Hot Items" />
           <div className="grid place-items-center py-12 grid-cols-1 md:grid-cols-2 mt-20 lg:grid-cols-4 gap-6">
             {items.map((item) => (

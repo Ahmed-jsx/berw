@@ -62,20 +62,20 @@ const ContactForm = () => {
         control={form.control}
         name={name}
         render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel className="text-gray-800 font-semibold text-base">
+          <FormItem className="space-y-2 w-full">
+            <FormLabel className="text-gray-800 font-semibold text-sm sm:text-base">
               {label}
             </FormLabel>
             <FormControl>
               {type === "input" ? (
                 <Input
-                  className="rounded-full border-0 bg-white/90 px-6 py-3 h-12 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-teal-500"
+                  className="w-full rounded-full border-0 bg-white/90 px-4 py-3 h-12 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-teal-500"
                   placeholder={placeholder}
                   {...field}
                 />
               ) : (
                 <Textarea
-                  className="resize-none rounded-full border-0 bg-white/90 px-6 py-4 min-h-[100px] placeholder:text-gray-400 placeholder:mt-4 focus-visible:ring-2 focus-visible:ring-teal-500"
+                  className="w-full resize-none rounded-2xl border-0 bg-white/90 px-4 py-4 min-h-[120px] placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-teal-500"
                   placeholder={placeholder}
                   {...field}
                 />
@@ -89,67 +89,60 @@ const ContactForm = () => {
   };
 
   return (
-    <section className="max-w-[calc(100vw-6rem)] mx-auto bg-primary py-24 rounded-default">
-      <div className=" ">
-        <div className="max-w-6xl  mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center ">
-            {/* Left side - Speech bubble and text */}
-            <div className="flex flex-col items-center justify-center space-y-8">
-              {/* Speech bubble */}
-              <Image
-                src="/speech-bubble.png"
-                alt="Speech Bubble"
-                width={300}
-                height={173}
-              />
+    <section className="max-w-full px-4 sm:px-6 lg:px-12 bg-primary py-16 sm:py-20 lg:py-24 rounded-default">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          {/* Left side */}
+          <div className="hidden lg:flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 sm:space-y-8">
+            <Image
+              src="/speech-bubble.png"
+              alt="Speech Bubble"
+              width={300}
+              height={173}
+              className="w-40 sm:w-56 lg:w-72 h-auto"
+            />
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-teal-600 leading-snug">
+              Feel Free <br className="hidden sm:block" />
+              To Contact Us!
+            </h2>
+          </div>
 
-              {/* Text */}
-              <div className="text-center">
-                <h2 className="text-4xl lg:text-5xl font-bold text-teal-600 leading-tight">
-                  Feel Free
-                  <br />
-                  To Contact Us!
-                </h2>
-              </div>
-            </div>
+          {/* Right side - Contact form */}
+          <div className="bg-transparent w-full">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6 w-full"
+              >
+                <FieldInput
+                  name="name"
+                  label="Name"
+                  placeholder="Enter your name"
+                  type="input"
+                />
+                <FieldInput
+                  name="phone_number"
+                  label="Mobile Number"
+                  placeholder="Enter your mobile number"
+                  type="input"
+                />
+                <FieldInput
+                  name="message"
+                  label="Message"
+                  placeholder="Write your message..."
+                  type="textarea"
+                />
 
-            {/* Right side - Contact form */}
-            <div className="bg-transparent">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-6"
-                >
-                  <FieldInput
-                    name="name"
-                    label="Name"
-                    placeholder="Add your note here"
-                    type="input"
-                  />
-                  <FieldInput
-                    name="phone_number"
-                    label="Mobile Number"
-                    placeholder="Add your note here"
-                    type="input"
-                  />
-                  <FieldInput
-                    name="message"
-                    label="Message"
-                    placeholder="Add your note here"
-                    type="textarea"
-                  />
-
-                  <div className="pt-4">
-                    <Button
-                      type="submit"
-                      className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-4 px-8 rounded-full h-14 text-lg transition-colors"
-                    >
-                      Send
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </div>
+                <div className="pt-2 sm:pt-4">
+                  <Button
+                    type="submit"
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-4 px-8 rounded-full h-14 text-lg transition-colors"
+                  >
+                    Send
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </div>
         </div>
       </div>

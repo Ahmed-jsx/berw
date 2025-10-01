@@ -22,6 +22,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Product } from "@/types/Product";
 import { useProducts } from "@/hooks/useProducts";
+import { useRouter } from "next/navigation";
 
 const MenuPage = () => {
   const { data: products, isLoading, error } = useProducts();
@@ -31,6 +32,7 @@ const MenuPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("name");
+  const router = useRouter();
 
   // Get unique categories from products
   const categories = useMemo(() => {
@@ -109,8 +111,15 @@ const MenuPage = () => {
       extras: [],
     };
 
-    addToCart(cartItem);
-    toast.success(`${product.product_name} added to cart!`);
+    if (!isAuthenticated) {
+      toast.error("Please login to add items");
+      router.push("/login");
+    }
+
+    if (isAuthenticated) {
+      addToCart(cartItem);
+      toast.success(`${product.product_name} added to cart!`);
+    }
   };
 
   // Loading state

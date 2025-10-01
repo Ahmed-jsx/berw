@@ -16,8 +16,8 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (isAuthenticated && isPublicPath) {
-    if (role === "admin") redirect("/dashboard");
     if (role === "user") redirect("/me");
+    if (role === "admin") redirect("/dashboard");
   }
 
   // Restrict role-based paths

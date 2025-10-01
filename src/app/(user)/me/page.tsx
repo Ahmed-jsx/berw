@@ -26,7 +26,7 @@ import {
   Home,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 
 export default function Me() {
   const { user, clearAuth, isAuthenticated } = useAuthStore();
@@ -39,7 +39,9 @@ export default function Me() {
     clearAuth();
     router.push("/login");
   };
-
+  if (!isAuthenticated) {
+    redirect("/login");
+  }
   if (!details) {
     return (
       <div className="flex h-[60vh] items-center justify-center text-muted-foreground">

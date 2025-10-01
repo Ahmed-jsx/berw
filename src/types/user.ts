@@ -12,6 +12,7 @@ export interface User {
   points: number;
   points_redeemed: number;
   visits_per_week: number;
+  role: "user" | "admin";
   total_orders: number;
   total_spent: number;
   avg_order_value: number;

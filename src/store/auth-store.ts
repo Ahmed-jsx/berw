@@ -19,13 +19,24 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       role: null,
+
+      // ✅ store role from API response
       setAuth: (token, user) =>
-      set({ token, user, isAuthenticated: true }), 
-      setRole: (role) => set({ role: role === "admin" ? "admin" : "user" }),
+        set({
+          token,
+          user,
+          isAuthenticated: true,
+          role: user.role === "admin" ? "admin" : "user",
+        }),
+
+      setRole: (role) =>
+        set({
+          role: role === "admin" ? "admin" : "user",
+        }),
 
       clearAuth: () =>
-        set({ token: null, user: null, isAuthenticated: false }),
+        set({ token: null, user: null, isAuthenticated: false, role: null }),
     }),
-    { name: "auth-storage" } 
+    { name: "auth-storage" }
   )
 );

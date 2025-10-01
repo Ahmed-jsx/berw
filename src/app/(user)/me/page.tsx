@@ -26,13 +26,19 @@ import {
   Home,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Me() {
-  const { user, clearAuth } = useAuthStore();
+  const { user, clearAuth, isAuthenticated } = useAuthStore();
   const { data } = useUserById(user?.id as number);
-
+  const router = useRouter();
   const details = data?.user;
   const recentOrders = data?.recent_orders || [];
+
+  const handleLogout = () => {
+    clearAuth();
+    router.push("/login");
+  };
 
   if (!details) {
     return (
@@ -73,7 +79,7 @@ export default function Me() {
                 Home
               </Button>
             </Link>
-            <Button variant="destructive" onClick={clearAuth}>
+            <Button variant="destructive" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>

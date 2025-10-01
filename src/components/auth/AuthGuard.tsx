@@ -1,64 +1,33 @@
 "use client";
 
 import { useAuthStore } from "@/store/auth-store";
-import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { redirect, usePathname } from "next/navigation";
+import React from "react";
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-  const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
+  const isPublicPath = ["/login", "/sign-up"].includes(pathname);
 
-  // Select auth state
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const role = useAuthStore((s) => s.role);
 
-  // Define public paths
-  const publicPaths = ["/login", "/sign-up"];
-  const isPublicPath = publicPaths.includes(pathname);
-  const isAdmin = role === "admin";
+  if (!isAuthenticated && !isPublicPath) {
+    redirect("/login");
+  }
 
-  useEffect(() => {
-    // Bypass in development
-    if (process.env.NODE_ENV === "development") {
-      setIsChecking(false);
-      return;
+  if (isAuthenticated && isPublicPath) {
+    if (role === "admin") redirect("/dashboard");
+    if (role === "user") redirect("/me");
+  }
+
+  // Restrict role-based paths
+  if (isAuthenticated) {
+    if (role === "admin" && pathname.startsWith("/me")) {
+      redirect("/dashboard");
     }
-
-    // Determine redirect logic
-    let redirectTo: string | null = null;
-
-    if (!isAuthenticated && !isPublicPath) {
-      // Not authenticated and trying to access protected route → login
-      redirectTo = "/login";
-    } else if (isAuthenticated && isPublicPath) {
-      // Authenticated user trying to access auth pages → redirect based on role
-      redirectTo = isAdmin ? "/dashboard" : "/me";
-    } else if (
-      isAuthenticated &&
-      !isAdmin &&
-      !isPublicPath &&
-      pathname !== "/me" &&
-      pathname !== "/"
-    ) {
-      // Non-admin trying to access admin routes → redirect to user home
-      redirectTo = "/me";
+    if (role === "user" && pathname.startsWith("/dashboard")) {
+      redirect("/me");
     }
-
-    if (redirectTo) {
-      router.replace(redirectTo);
-    } else {
-      setIsChecking(false);
-    }
-  }, [isAuthenticated, isAdmin, isPublicPath, pathname, router]);
-
-  // Show loading state while checking auth
-  if (isChecking && process.env.NODE_ENV !== "development") {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
-      </div>
-    );
   }
 
   return <>{children}</>;

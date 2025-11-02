@@ -22,10 +22,13 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Product } from "@/types/Product";
 import { useProducts } from "@/hooks/useProducts";
+import { useExtras } from "@/hooks/useExtras";
+import { Extra } from "@/types/extras";
 import { useRouter } from "next/navigation";
 
 const MenuPage = () => {
   const { data: products, isLoading, error } = useProducts();
+  const { data: extras = [] } = useExtras();
   const { addToCart, getCartItemsCount } = useOrderStore();
   const { isAuthenticated } = useAuthStore();
 
@@ -66,8 +69,8 @@ const MenuPage = () => {
         product.product_name
           .toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
-        product.product_components
-          .toLowerCase()
+        product
+          .product_components!.toLowerCase()
           .includes(searchQuery.toLowerCase());
       const matchesCategory =
         selectedCategory === "all" ||
@@ -117,7 +120,7 @@ const MenuPage = () => {
     }
 
     if (isAuthenticated) {
-      addToCart(cartItem);
+      addToCart(cartItem, extras as Extra[]);
       toast.success(`${product.product_name} added to cart!`);
     }
   };
@@ -250,7 +253,7 @@ const MenuPage = () => {
             );
           })}
         </div>
-        {featuredProducts.length > 0 && (
+        {/* {featuredProducts.length > 0 && (
           <section className="mb-16">
             <div className="flex items-center gap-3 mb-8">
               <Star className="h-6 w-6 text-primary" />
@@ -266,14 +269,13 @@ const MenuPage = () => {
                   name={product.product_name}
                   description={product.product_components}
                   price={parseFloat(product.product_price)}
-                  image={product.product_photo}
                   isFeatured={product.is_featured}
-                  onOrder={() => handleAddToCart(product)}
+                  product_photo={product.product_photo}
                 />
               ))}
             </div>
           </section>
-        )}
+        )} */}
 
         {/* Products Grid */}
         <section>
@@ -320,9 +322,8 @@ const MenuPage = () => {
                     name={product.product_name}
                     description={product.product_components}
                     price={parseFloat(product.product_price)}
-                    image={product.product_photo}
+                    product_photo={product.product_photo}
                     isFeatured={product.is_featured}
-                    onOrder={() => handleAddToCart(product)}
                   />
                 </Link>
               ))}

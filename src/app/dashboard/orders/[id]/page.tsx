@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardContent, // Added CardContent for layout consistency
+  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -14,19 +14,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Assuming you have a DropdownMenu component
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAdminOrderDetails } from "@/hooks/useOrderQueries"; // Assuming this hook is correct
-import {
-  Calendar,
-  DollarSign,
-  MoreVertical,
-  Package,
-  Plus,
-} from "lucide-react";
+import { useAdminOrderDetails } from "@/hooks/useOrderQueries";
+import axios from "axios";
+import { Calendar, DollarSign, MoreVertical, Package } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
-// --- Utility Functions from Reference Page ---
+// --- Utility Functions ---
 
 const formatDate = (dateString: string) => {
   if (!dateString) return "N/A";
@@ -40,41 +36,78 @@ const formatDate = (dateString: string) => {
 };
 
 const getStatusColor = (status: string) => {
-  switch (status.toLowerCase()) {
-    case "completed":
-      return "bg-green-100 text-green-800";
-    case "pending":
-      return "bg-yellow-100 text-yellow-800";
-    case "processing":
-      return "bg-blue-100 text-blue-800";
-    case "cancelled":
-      return "bg-red-100 text-red-800";
-    case "shipped":
-      return "bg-purple-100 text-purple-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
-
-// --- Order Status Update Handler (Placeholder) ---
-
-// Placeholder for the actual mutation/API call
-const updateOrderStatus = (orderId: number, newStatus: string) => {
-  console.log(`Order ${orderId}: Updating status to ${newStatus}`);
-  // In a real application, you would use a mutation hook here, like:
-  // const mutation = useUpdateOrderStatusMutation();
-  // mutation.mutate({ id: orderId, status: newStatus });
-  alert(`Attempted to change order ${orderId} status to: ${newStatus}`);
+  const statusLower = status.toLowerCase();
+  if (statusLower === "pending") return "bg-yellow-500/10 text-yellow-500";
+  if (statusLower === "processing") return "bg-blue-500/10 text-blue-500";
+  if (statusLower === "completed" || statusLower === "complete")
+    return "bg-green-500/10 text-green-500";
+  if (statusLower === "cancelled") return "bg-red-500/10 text-red-500";
+  return "bg-gray-500/10 text-gray-500";
 };
 
 // --- Component ---
 
 const OrderPage = ({ params }: { params: { id: string } }) => {
-  const orderId = parseInt(params.id, 10);
-  const { data: order, isLoading, error } = useAdminOrderDetails(orderId);
-  const [status, setStatus] = useState(order?.order_status || "pending");
+  const orderId = params.id;
+  const {
+    data: order,
+    isLoading,
+    error,
+    refetch,
+  } = useAdminOrderDetails(orderId);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // --- Loading State (Matching UserDetailsPage Skeleton) ---
+  // --- Order Status Update Handler ---
+  const updateOrderStatus = async (newStatus: string) => {
+    // Prevent multiple simultaneous updates
+    if (isUpdating) return;
+
+    // Don't update if it's already the current status
+    if (order?.order_status?.toLowerCase() === newStatus.toLowerCase()) {
+      toast.info("Order is already in this status");
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      // Use the correct endpoint format: /api/orders/{id}/{status}
+      const response = await axios.post(
+        `https://monkey-dc6r.onrender.com/api/orders/${orderId}/${newStatus}`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Refetch the order data to get updated information
+      await refetch();
+
+      // Show success message
+      toast.success(`Order status updated to ${newStatus}`, {
+        description: `Order #${
+          order?.order_code || orderId
+        } is now ${newStatus}`,
+      });
+    } catch (err: any) {
+      console.error("Failed to update order:", err);
+
+      // Show detailed error message
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to update order status";
+      toast.error("Update Failed", {
+        description: errorMessage,
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // --- Loading State ---
   if (isLoading) {
     return (
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -89,7 +122,7 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
     );
   }
 
-  // --- Error/Not Found State (Matching UserDetailsPage Design) ---
+  // --- Error/Not Found State ---
   if (error || !order) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
@@ -108,12 +141,7 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
     );
   }
 
-  const orderStatusOptions = [
-    "pending",
-    "processing",
-    "completed",
-    "cancelled",
-  ];
+  const orderStatusOptions = ["pending", "processing", "complete", "cancelled"];
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-8">
@@ -137,27 +165,32 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
               <div className="flex flex-col sm:flex-row gap-4 text-gray-600">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  {/* <span>Placed on {formatDate(order.created_at)}</span> */}
+                  <span>Placed on {formatDate(order.created_at)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Status Update Dropdown/Button */}
+            {/* Status Update Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
                   aria-label="Update Order Status"
+                  disabled={isUpdating}
                 >
-                  Update Status <MoreVertical className="ml-2 h-4 w-4" />
+                  {isUpdating ? "Updating..." : "Update Status"}
+                  <MoreVertical className="ml-2 h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {orderStatusOptions.map((status) => (
                   <DropdownMenuItem
                     key={status}
-                    onClick={() => updateOrderStatus(order.order_id, status)}
-                    disabled={order.order_status === status}
+                    onClick={() => updateOrderStatus(status)}
+                    disabled={
+                      isUpdating ||
+                      order.order_status.toLowerCase() === status.toLowerCase()
+                    }
                     className="capitalize"
                   >
                     {status}
@@ -170,11 +203,7 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
       </Card>
 
       {/* Metrics & Details Grid */}
-      <div
-        className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card 
-        grid grid-cols-1 gap-6 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs 
-        sm:grid-cols-2 lg:grid-cols-3"
-      >
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Total Price */}
         <Card className="@container/card" data-slot="card">
           <CardHeader>
@@ -182,7 +211,6 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
             <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
               ${Number(order.total_price).toFixed(2)}
             </CardTitle>
-            {/* Using a regular div instead of CardAction */}
             <div className="flex items-center text-sm font-medium text-green-700">
               <DollarSign className="size-4 mr-1" />
               Final Charge
@@ -194,30 +222,6 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
             </div>
           </CardFooter>
         </Card>
-
-        {/* User Details */}
-        {/* <Card className="@container/card" data-slot="card">
-          <CardHeader>
-            <CardDescription>Customer</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {order.user.user_name}
-            </CardTitle>
-            <div className="flex items-center text-sm font-medium text-blue-700">
-              <User className="size-4 mr-1" />
-              User ID: {order.user.user_id}
-            </div>
-          </CardHeader>
-          <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            <div className="text-muted-foreground">
-              <a
-                href={`/admin/users/${order.user.user_id}`}
-                className="text-blue-500 hover:underline"
-              >
-                View User Profile
-              </a>
-            </div>
-          </CardFooter>
-        </Card> */}
       </div>
 
       {/* Items List */}
@@ -259,24 +263,6 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
                       Note: {item.notes}
                     </div>
                   )}
-                  {item.extras.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-gray-100">
-                      <h5 className="font-medium mb-1 flex items-center gap-1 text-gray-700">
-                        <Plus className="h-3 w-3" /> Extras:
-                      </h5>
-                      <div className="flex flex-wrap gap-2">
-                        {item.extras.map((extra) => (
-                          <Badge
-                            key={extra.extra_id}
-                            variant="secondary"
-                            className="bg-green-50 text-green-700 text-xs"
-                          >
-                            {extra.extra_name} (+${extra.extra_price})
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             ))}
@@ -284,13 +270,9 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
         </CardContent>
       </Card>
 
-      {/* Order Summary & History */}
+      {/* Order Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Summary Card */}
-        <Card
-          className="@container/card from-primary/5 to-card bg-gradient-to-t shadow-xs"
-          data-slot="card"
-        >
+        <Card className="@container/card from-primary/5 to-card bg-gradient-to-t shadow-xs">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-green-600" />
@@ -308,7 +290,6 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
                 ${Number(order.extras_subtotal).toFixed(2)}
               </span>
             </div>
-
             <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200">
               <span>Total Paid</span>
               <span className="text-gray-900">

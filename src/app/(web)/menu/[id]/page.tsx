@@ -122,13 +122,15 @@ function SingleProductPage({ params }: PageProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">
+          <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-primary mx-auto mb-4" />
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
             Loading Product
           </h2>
-          <p className="text-muted-foreground">Please wait...</p>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Please wait...
+          </p>
         </div>
       </div>
     );
@@ -137,23 +139,27 @@ function SingleProductPage({ params }: PageProps) {
   // Error state
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="bg-destructive/10 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <ShoppingCart className="h-8 w-8 text-destructive" />
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-md mx-auto p-4 sm:p-6">
+          <div className="bg-destructive/10 rounded-full p-3 sm:p-4 w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 flex items-center justify-center">
+            <ShoppingCart className="h-7 w-7 sm:h-8 sm:w-8 text-destructive" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
             Product Not Found
           </h2>
-          <p className="text-muted-foreground mb-4">
+          <p className="text-sm sm:text-base text-muted-foreground mb-4">
             The product you're looking for doesn't exist or has been removed.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Button onClick={() => router.back()} variant="outline">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Button
+              onClick={() => router.back()}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
               Go Back
             </Button>
-            <Link href="/menu">
-              <Button className="bg-primary text-primary-foreground">
+            <Link href="/menu" className="w-full sm:w-auto">
+              <Button className="bg-primary text-primary-foreground w-full">
                 View Menu
               </Button>
             </Link>
@@ -165,9 +171,9 @@ function SingleProductPage({ params }: PageProps) {
 
   return (
     <>
-      <main className="min-h-screen lg:max-w-[calc(100vw-6rem)] lg:my-8  lg:mx-auto max-w-full lg:rounded-[40px] relative overflow-hidden">
+      <main className="min-h-screen w-full lg:max-w-[calc(100vw-6rem)] lg:my-8 my-12 px-2 lg:mx-auto lg:rounded-[40px] relative overflow-hidden">
         {/* Hero Section */}
-        <section className="relative min-h-[80vh] pt-20 rounded-default overflow-hidden">
+        <section className="relative min-h-[70vh] sm:min-h-[75vh] lg:min-h-[80vh] pt-16 sm:pt-20 mt-12 rounded-default overflow-hidden">
           {/* Background */}
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -183,94 +189,98 @@ function SingleProductPage({ params }: PageProps) {
           </div>
 
           {/* Content */}
-          <div className="relative z-10 flex items-center min-h-[75vh] px-4 md:px-12">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center w-full">
+          <div className="relative z-10 flex items-center min-h-[65vh] sm:min-h-[70vh] lg:min-h-[75vh] px-4 sm:px-6 md:px-8 lg:px-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-center w-full max-w-7xl mx-auto">
               {/* Left - Product image */}
-              <div className="flex justify-center">
+              <div className="flex justify-center order-1 lg:order-1">
                 <div className="relative">
                   <Image
                     width={500}
                     height={500}
                     src={"/bg1.png"}
                     alt={product.product_name}
-                    className="w-72 h-72 md:w-96 md:h-96 object-cover rounded-2xl shadow-2xl"
+                    className="w-56 h-56 xs:w-64 xs:h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 object-cover rounded-2xl shadow-2xl"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = "/bg1.png";
                     }}
                   />
                   {product.is_featured && (
-                    <div className="absolute -top-4 -right-4 bg-primary rounded-full p-3">
-                      <Star className="h-6 w-6 text-primary-foreground fill-current" />
+                    <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 bg-primary rounded-full p-2 sm:p-3">
+                      <Star className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground fill-current" />
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Right - Product info */}
-              <div className="text-white space-y-6">
+              <div className="text-white space-y-4 sm:space-y-5 lg:space-y-6 order-2 lg:order-2">
                 <div>
-                  <h1 className="text-3xl md:text-5xl font-bold mb-6">
+                  <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 lg:mb-6 leading-tight">
                     {product.product_name}
                   </h1>
-                  <div className="bg-secondary/80 backdrop-blur-md rounded-full px-4 py-2 inline-block">
-                    <span className="text-secondary-foreground font-medium">
+                  <div className="bg-secondary/80 backdrop-blur-md rounded-full px-3 py-1.5 sm:px-4 sm:py-2 inline-block">
+                    <span className="text-xs sm:text-sm md:text-base text-secondary-foreground font-medium">
                       {product.product_category}
                     </span>
                   </div>
                 </div>
 
-                <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-lg">
+                <p className="text-sm sm:text-base md:text-lg text-white/90 leading-relaxed max-w-lg">
                   {product.product_components}
                 </p>
 
                 {product.has_points && (
-                  <div className="flex items-center gap-2 bg-green-500/20 backdrop-blur-md rounded-full px-4 py-2 w-fit">
-                    <Star className="h-4 w-4 text-green-400" />
-                    <span className="text-green-300 font-medium">
+                  <div className="flex items-center gap-2 bg-green-500/20 backdrop-blur-md rounded-full px-3 py-1.5 sm:px-4 sm:py-2 w-fit">
+                    <Star className="h-3 w-3 sm:h-4 sm:w-4 text-green-400 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm md:text-base text-green-300 font-medium">
                       Earn {product.points} points with this order
                     </span>
                   </div>
                 )}
 
                 {/* Quantity and Price */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <span className="text-white font-medium">Quantity:</span>
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                    <span className="text-sm sm:text-base text-white font-medium">
+                      Quantity:
+                    </span>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleQuantityChange(-1)}
                         disabled={quantity <= 1}
-                        className="h-10 w-10 rounded-full bg-white/20 border-white/30 text-white hover:bg-white/30"
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/20 border-white/30 text-white hover:bg-white/30"
                       >
-                        <Minus className="h-4 w-4" />
+                        <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </Button>
-                      <span className="text-2xl font-bold text-white w-12 text-center">
+                      <span className="text-xl sm:text-2xl font-bold text-white w-10 sm:w-12 text-center">
                         {quantity}
                       </span>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleQuantityChange(1)}
-                        className="h-10 w-10 rounded-full bg-white/20 border-white/30 text-white hover:bg-white/30"
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/20 border-white/30 text-white hover:bg-white/30"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="text-2xl sm:text-3xl bg-white/20 backdrop-blur-lg border border-white/15 px-6 py-3 rounded-full font-bold text-primary">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+                    <div className="text-xl sm:text-2xl lg:text-3xl bg-white/20 backdrop-blur-lg border border-white/15 px-4 py-2.5 sm:px-5 sm:py-3 lg:px-6 lg:py-3 rounded-full font-bold text-primary text-center sm:text-left">
                       {totalPrice.toFixed(2)}{" "}
-                      <span className="text-lg text-primary/80">EGP</span>
+                      <span className="text-sm sm:text-base lg:text-lg text-primary/80">
+                        EGP
+                      </span>
                     </div>
 
                     <Button
                       onClick={handleSubmit(onSubmit)}
                       size="lg"
-                      className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 rounded-full text-lg"
+                      className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-2.5 sm:px-8 sm:py-3 rounded-full text-base sm:text-lg"
                     >
                       + Add to Cart
                     </Button>
@@ -283,35 +293,36 @@ function SingleProductPage({ params }: PageProps) {
       </main>
 
       {/* Extras and Notes */}
-      <section className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-8 space-y-8">
-            <h2 className="text-2xl md:text-4xl font-bold text-foreground">
+      <section className="py-6 sm:py-8 lg:py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10">
+          <div className="lg:col-span-8 space-y-5 sm:space-y-6 lg:space-y-8">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
               Any extras?
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
               {extras.map((extra) => (
                 <Card
                   key={extra.id}
-                  className="p-6 bg-card border border-border hover:shadow-md transition-shadow"
+                  className="p-4 sm:p-5 lg:p-6 bg-card border border-border hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                       <Checkbox
                         id={`extra-${extra.id}`}
                         checked={selectedExtras.includes(extra.id)}
                         onCheckedChange={(checked) =>
                           handleExtraChange(extra.id, checked as boolean)
                         }
+                        className="flex-shrink-0"
                       />
                       <Label
                         htmlFor={`extra-${extra.id}`}
-                        className="text-lg font-medium cursor-pointer"
+                        className="text-sm sm:text-base lg:text-lg font-medium cursor-pointer truncate"
                       >
                         {extra.name}
                       </Label>
                     </div>
-                    <span className="text-primary font-bold">
+                    <span className="text-sm sm:text-base lg:text-lg text-primary font-bold whitespace-nowrap">
                       +{extra.price} EGP
                     </span>
                   </div>
@@ -320,12 +331,12 @@ function SingleProductPage({ params }: PageProps) {
             </div>
 
             {selectedExtras.length > 0 && (
-              <Card className="p-4 bg-primary/10 border border-primary/20">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-foreground">
+              <Card className="p-3 sm:p-4 bg-primary/10 border border-primary/20">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm sm:text-base font-medium text-foreground">
                     Selected Extras:
                   </span>
-                  <span className="font-bold text-primary">
+                  <span className="text-sm sm:text-base lg:text-lg font-bold text-primary whitespace-nowrap">
                     +
                     {selectedExtras.reduce((sum, id) => {
                       const extra = extras.find((e) => e.id === id);
@@ -338,9 +349,9 @@ function SingleProductPage({ params }: PageProps) {
             )}
           </div>
 
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-4 sm:space-y-5 lg:space-y-6">
             <Label
-              className="text-xl md:text-2xl font-medium text-foreground"
+              className="text-lg sm:text-xl md:text-2xl font-medium text-foreground block"
               htmlFor="notes"
             >
               Add Special Note (Optional)
@@ -349,10 +360,10 @@ function SingleProductPage({ params }: PageProps) {
               {...register("notes")}
               type="text"
               id="notes"
-              className="rounded-full p-4 placeholder:text-muted-foreground bg-background border-input w-full"
+              className="rounded-full p-3 sm:p-4 placeholder:text-muted-foreground bg-background border-input w-full text-sm sm:text-base"
               placeholder="Add your note here..."
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Let us know about any dietary restrictions or special preferences.
             </p>
           </div>

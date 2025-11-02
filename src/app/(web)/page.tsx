@@ -18,7 +18,7 @@ const Home = () => {
     <section className="w-full">
       <Hero />
 
-      <section className="max-w-[1220px] py-24 mx-auto">
+      <section className="max-w-[1220px] lg:py-16 py-8  mx-auto">
         <FeaturedItems />
         <SectionHeader title="Explore the Coffee World" />
         <ExploreCoffee />

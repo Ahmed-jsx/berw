@@ -18,13 +18,11 @@ import {
   ShoppingBag,
   Calendar,
   TrendingUp,
-  TrendingDown,
   Star,
   Gift,
   Clock,
   User,
   Shield,
-  MapPin,
   Coffee,
   Plus,
   DollarSign,
@@ -73,8 +71,15 @@ export default function UserDetailsPage() {
     );
   }
 
-  // data is already user_details from the API
-  const { user, recent_orders, favorite_category, favorite_extras } = data;
+  const {
+    user,
+    recent_orders,
+    favorite_category,
+    favorite_extras,
+    points_balance,
+    points_redeemed,
+    has_points,
+  } = data;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -103,16 +108,10 @@ export default function UserDetailsPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-8">
       {/* Enhanced Profile Header */}
       <Card className="overflow-hidden">
-        <CardContent className="relative pt-0 pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 ">
-            <div
-              className="relative *:data-[slot=avatar]:from-primary/5 *:data-[slot=avatar]:to-avatar dark:*:data-[slot=avatar]:bg-avatar 
-  grid grid-cols-1 gap-4 *:data-[slot=avatar]:bg-gradient-to-t *:data-[slot=avatar]"
-            >
-              <div
-                data-slot="avatar"
-                className="h-20 w-20 flex items-center  justify-center rounded-full from-primary/5 to-avatar bg-gradient-to-t shadow-xs  text-2xl font-bold text-gray-700 border-4 border-primary/10"
-              >
+        <CardContent className="relative pt-6 pb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            <div className="relative">
+              <div className="h-20 w-20 flex items-center justify-center rounded-full bg-gradient-to-t from-primary/5 to-primary/20 shadow-lg text-2xl font-bold text-gray-700 border-4 border-primary/10">
                 {user.user_name[0].toUpperCase()}
               </div>
               {user.is_admin && (
@@ -144,7 +143,15 @@ export default function UserDetailsPage() {
                       Admin
                     </Badge>
                   )}
-                  {user.has_points && user.points > 0 && (
+                  {user.is_frequent_visitor && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-purple-100 text-purple-800"
+                    >
+                      Frequent Visitor
+                    </Badge>
+                  )}
+                  {has_points && points_balance > 0 && (
                     <Badge
                       variant="secondary"
                       className="bg-green-100 text-green-800"
@@ -174,19 +181,12 @@ export default function UserDetailsPage() {
         </CardContent>
       </Card>
 
-      <div
-        className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card 
-  grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs 
-  sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {/* Total Orders */}
-        <Card
-          className="@container/card from-primary/5 to-card bg-gradient-to-t shadow-xs"
-          data-slot="card"
-        >
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardDescription>Total Orders</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            <CardTitle className="text-2xl font-semibold tabular-nums">
               {user.total_orders}
             </CardTitle>
             <CardAction>
@@ -207,10 +207,10 @@ export default function UserDetailsPage() {
         </Card>
 
         {/* Total Spent */}
-        <Card className="@container/card" data-slot="card">
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardDescription>Total Spent</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            <CardTitle className="text-2xl font-semibold tabular-nums">
               ${user.total_spent}
             </CardTitle>
             <CardAction>
@@ -231,10 +231,10 @@ export default function UserDetailsPage() {
         </Card>
 
         {/* Avg Order Value */}
-        <Card className="@container/card" data-slot="card">
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardDescription>Avg Order Value</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            <CardTitle className="text-2xl font-semibold tabular-nums">
               ${user.avg_order_value.toFixed(2)}
             </CardTitle>
             <CardAction>
@@ -255,16 +255,16 @@ export default function UserDetailsPage() {
         </Card>
 
         {/* Points Balance */}
-        <Card className="@container/card" data-slot="card">
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardDescription>Points Balance</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {data.points_balance}
+            <CardTitle className="text-2xl font-semibold tabular-nums">
+              {points_balance}
             </CardTitle>
             <CardAction>
               <Badge variant="outline">
                 <Star className="size-4" />
-                {data.has_points ? "Active" : "Inactive"}
+                {has_points ? "Active" : "Inactive"}
               </Badge>
             </CardAction>
           </CardHeader>
@@ -279,11 +279,11 @@ export default function UserDetailsPage() {
         </Card>
 
         {/* Points Redeemed */}
-        <Card className="@container/card" data-slot="card">
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardDescription>Points Redeemed</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {data.points_redeemed}
+            <CardTitle className="text-2xl font-semibold tabular-nums">
+              {points_redeemed}
             </CardTitle>
             <CardAction>
               <Badge variant="outline">
@@ -301,10 +301,10 @@ export default function UserDetailsPage() {
         </Card>
 
         {/* Weekly Visits */}
-        <Card className="@container/card" data-slot="card">
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardDescription>Weekly Visits</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            <CardTitle className="text-2xl font-semibold tabular-nums">
               {user.visits_per_week}
             </CardTitle>
             <CardAction>
@@ -327,10 +327,10 @@ export default function UserDetailsPage() {
         </Card>
 
         {/* Last Purchase */}
-        <Card className="@container/card" data-slot="card">
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardDescription>Last Purchase</CardDescription>
-            <CardTitle className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
+            <CardTitle className="text-lg font-semibold tabular-nums">
               {user.last_purchase_date
                 ? formatDate(user.last_purchase_date).split(",")[0]
                 : "Never"}
@@ -351,10 +351,10 @@ export default function UserDetailsPage() {
         </Card>
 
         {/* Favorite Category */}
-        <Card className="@container/card" data-slot="card">
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardDescription>Favorite Category</CardDescription>
-            <CardTitle className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
+            <CardTitle className="text-lg font-semibold tabular-nums">
               {favorite_category || "None"}
             </CardTitle>
             <CardAction>
@@ -374,11 +374,8 @@ export default function UserDetailsPage() {
       </div>
 
       {/* Account Information */}
-      <div className="grid *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card
-          className="@container/card from-primary/5 to-card bg-gradient-to-t shadow-xs"
-          data-slot="card"
-        >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
@@ -394,29 +391,36 @@ export default function UserDetailsPage() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Account Created</span>
-              <span>{formatDate(user.created_at)}</span>
+              <span className="text-sm">{formatDate(user.created_at)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Last Updated</span>
-              <span>{formatDate(user.updated_at)}</span>
+              <span className="text-sm">{formatDate(user.updated_at)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Last Visit</span>
-              <span>
+              <span className="text-sm">
                 {user.last_visit ? formatDate(user.last_visit) : "Not recorded"}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Google Account</span>
-              <span>{user.google_id ? "Connected" : "Not connected"}</span>
+              <Badge variant={user.google_id ? "default" : "secondary"}>
+                {user.google_id ? "Connected" : "Not connected"}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Account Status</span>
+              <Badge
+                variant={user.is_frequent_visitor ? "default" : "secondary"}
+              >
+                {user.is_frequent_visitor ? "Frequent Visitor" : "Regular User"}
+              </Badge>
             </div>
           </CardContent>
         </Card>
 
-        <Card
-          data-slot="card"
-          className="@container/card from-primary/5 to-card bg-gradient-to-t shadow-xs"
-        >
+        <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Award className="h-5 w-5 text-purple-600" />
@@ -454,12 +458,31 @@ export default function UserDetailsPage() {
                 )}
               </div>
             </div>
+            <div>
+              <span className="text-gray-600 block mb-2">Loyalty Status</span>
+              <div className="flex gap-2">
+                <Badge
+                  variant={has_points ? "default" : "secondary"}
+                  className={has_points ? "bg-green-600" : ""}
+                >
+                  {has_points ? "Enrolled" : "Not Enrolled"}
+                </Badge>
+                {user.is_new && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-100 text-blue-800"
+                  >
+                    New Member
+                  </Badge>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Enhanced Recent Orders */}
-      <Card>
+      <Card className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-blue-600" />
@@ -468,63 +491,95 @@ export default function UserDetailsPage() {
         </CardHeader>
         <CardContent>
           {recent_orders.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                <ShoppingBag className="h-8 w-8 text-gray-400" />
+            <div className="text-center py-12">
+              <div className="h-20 w-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-inner">
+                <ShoppingBag className="h-10 w-10 text-gray-400" />
               </div>
-              <p className="text-gray-500">No orders yet</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                No orders yet
+              </h3>
+              <p className="text-sm text-gray-500">
+                Orders will appear here once placed
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
               {recent_orders.map((order) => (
-                <div
+                <Card
                   key={order.order_id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  className="bg-white border-2 border-gray-100 hover:border-primary/30 hover:shadow-md transition-all duration-200"
                 >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-semibold">
-                          Order #{order.order_code}
-                        </h4>
-                        <Badge className={getStatusColor(order.status)}>
-                          {order.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {formatDate(order.created_at)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-gray-900">
-                        ${order.total_price}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Order Items */}
-                  <div className="space-y-2">
-                    <h5 className="text-sm font-medium text-gray-700">
-                      Items:
-                    </h5>
-                    {order.items.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded"
-                      >
-                        <div>
-                          <span className="font-medium">
-                            {item.product_name}
-                          </span>
-                          <span className="text-gray-500 ml-2">
-                            × {item.quantity}
-                          </span>
+                  <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <Badge
+                            variant="outline"
+                            className="bg-blue-50 text-blue-700 font-mono"
+                          >
+                            <Package className="h-3 w-3 mr-1" />#
+                            {order.order_code}
+                          </Badge>
+                          <Badge className={getStatusColor(order.status)}>
+                            {order.status.charAt(0).toUpperCase() +
+                              order.status.slice(1)}
+                          </Badge>
                         </div>
-                        <span className="font-medium">${item.total_price}</span>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>{formatDate(order.created_at)}</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">
+                            Total
+                          </p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            ${order.total_price}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Order Items */}
+                    <div className="space-y-2 pt-3 border-t border-gray-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Coffee className="h-4 w-4 text-gray-500" />
+                        <h5 className="text-sm font-semibold text-gray-700">
+                          Items ({order.items.length})
+                        </h5>
+                      </div>
+                      <div className="space-y-1.5">
+                        {order.items.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center text-sm bg-gradient-to-r from-gray-50 to-transparent p-3 rounded-lg hover:from-gray-100 transition-colors"
+                          >
+                            <div className="flex-1">
+                              <span className="font-medium text-gray-900">
+                                {item.product_name}
+                              </span>
+                              <div className="flex items-center gap-3 mt-1">
+                                <Badge variant="secondary" className="text-xs">
+                                  Qty: {item.quantity}
+                                </Badge>
+                                <span className="text-xs text-gray-500">
+                                  ${item.unit_price} each
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-right ml-4">
+                              <span className="font-semibold text-gray-900">
+                                ${item.total_price}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}

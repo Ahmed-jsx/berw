@@ -1,4 +1,5 @@
 export interface User {
+  is_frequent_visitor: any;
   id: number;
   user_name: string;
   user_email: string;

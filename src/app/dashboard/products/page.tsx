@@ -1,8 +1,5 @@
-import { ProductDashboard } from "@/components/dashboard/product-dashboard";
-import React from "react";
+import { ProductsTable } from "@/components/tables/ProductsTable";
 
-const page = () => {
-  return <ProductDashboard />;
-};
-
-export default page;
+export default function ProductsPage() {
+  return <ProductsTable />;
+}

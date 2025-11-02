@@ -9,4 +9,3 @@ export function useUser(): {
   const { user, token, isAuthenticated } = useAuthStore();
   return { user, token, isAuthenticated };
 }
-

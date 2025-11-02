@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/store/auth-store";
-import {  ProductsResponse, ProductResponse } from '@/types/Product';
+import { ProductsResponse, ProductResponse } from "@/types/Product";
 import type { User } from "@/types/user";
+import axios from "axios";
 import z from "zod";
 
 export const apiFetch = async <T = any>(
@@ -24,10 +25,10 @@ export const apiFetch = async <T = any>(
 const ProductSchema = z.object({
   product_id: z.number(),
   product_name: z.string(),
-  product_components: z.string(),
-  product_price: z.string(), // backend sends as string
-  product_category: z.string(),
-  product_photo: z.string(),
+  product_components: z.string().nullable().optional().default(""),
+  product_price: z.string(),
+  product_category: z.string().nullable().default("Uncategorized"), // ✅ Fixed: allow null
+  product_photo: z.string().nullable().optional(),
   is_featured: z.boolean(),
   has_points: z.boolean(),
   points: z.number(),
@@ -35,6 +36,17 @@ const ProductSchema = z.object({
   updated_at: z.string(),
 });
 export type Product = z.infer<typeof ProductSchema>;
+
+export interface CreateProduct {
+  product_name: string;
+  category: string;
+  price: number;
+  product_components: string;
+  product_photo?: string; // Optional — may be URL from backend
+  file?: File; // For uploading a new image
+  is_featured: boolean;
+  has_points: boolean;
+}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
@@ -44,13 +56,16 @@ export const api = {
     getAll: async (): Promise<Product[]> => {
       const res = await fetch(`${API_URL}/products`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch products");
-      const data: unknown = await res.json();
+
+      const data = await res.json();
+
       const parsed = z
         .object({
           message: z.string(),
           products: z.array(ProductSchema),
         })
         .parse(data);
+
       return parsed.products;
     },
 
@@ -69,30 +84,96 @@ export const api = {
     },
 
     // Create product
-    create: async (
-      body: Omit<Product, "product_id" | "created_at" | "updated_at">
-    ): Promise<Product> => {
-      const res = await fetch(`${API_URL}/products`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error("Failed to create product");
-      const data: unknown = await res.json();
-      const parsed = z
-        .object({
-          message: z.string(),
-          product: ProductSchema,
-        })
-        .parse(data);
-      return parsed.product;
+    create: async (body: CreateProduct): Promise<Product> => {
+      try {
+        const formData = new FormData();
+
+        // Required fields
+        formData.append("product_name", body.product_name);
+        formData.append("category", body.category);
+        formData.append("price", String(body.price));
+
+        // Optional fields - only add if they have values
+        if (body.product_components) {
+          formData.append("product_components", body.product_components);
+        }
+
+        // Boolean fields - backend might expect specific format
+        // Try different formats based on what your backend accepts:
+
+        // Option 1: String boolean
+        formData.append("is_featured", String(body.is_featured));
+        formData.append("has_points", String(body.has_points));
+
+        // Option 2: If backend expects 1/0 instead, use this:
+        // formData.append("is_featured", body.is_featured ? "1" : "0");
+        // formData.append("has_points", body.has_points ? "1" : "0");
+
+        // Option 3: If backend expects true/false lowercase strings:
+        // formData.append("is_featured", body.is_featured ? "true" : "false");
+        // formData.append("has_points", body.has_points ? "true" : "false");
+
+        // File upload
+        if (body.file) {
+          formData.append("product_photo", body.file);
+          console.log("📸 Uploading file:", {
+            name: body.file.name,
+            type: body.file.type,
+            size: body.file.size,
+          });
+        }
+
+        // Debug logging
+        console.log("📤 Sending product data:");
+        for (let [key, value] of formData.entries()) {
+          if (value instanceof File) {
+            console.log(`  ${key}:`, `[File: ${value.name}]`);
+          } else {
+            console.log(`  ${key}:`, value);
+          }
+        }
+
+        const res = await axios.post(`${API_URL}/products`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        console.log("✅ Success response:", res.data);
+
+        const parsed = z
+          .object({
+            message: z.string(),
+            product: ProductSchema,
+          })
+          .parse(res.data);
+
+        return parsed.product;
+      } catch (err: any) {
+        if (axios.isAxiosError(err)) {
+          console.error("❌ Axios Error Details:", {
+            status: err.response?.status,
+            statusText: err.response?.statusText,
+            data: err.response?.data,
+            url: err.config?.url,
+          });
+
+          const errorMsg =
+            err.response?.data?.message ||
+            err.response?.data?.error ||
+            "Unknown error";
+
+          throw new Error(
+            `Failed to create product (${err.response?.status}): ${errorMsg}`
+          );
+        }
+        console.error("❌ Unexpected error:", err);
+        throw err;
+      }
     },
 
     // Update product
-    update: async (
-      id: number,
-      body: Partial<Product>
-    ): Promise<Product> => {
+    update: async (id: number, body: Partial<Product>): Promise<Product> => {
       const res = await fetch(`${API_URL}/products/${id}`, {
         method: "PUT", // confirm if backend uses PUT or PATCH
         headers: { "Content-Type": "application/json" },
@@ -122,11 +203,12 @@ export const api = {
 
 export const fetchUser = async (): Promise<User | null> => {
   try {
-    const data = await apiFetch<User>("https://monkey-dc6r.onrender.com/api/user/me");
-    useAuthStore.getState().setAuth(
-      useAuthStore.getState().token as string,
-      data
+    const data = await apiFetch<User>(
+      "https://monkey-dc6r.onrender.com/api/user/me"
     );
+    useAuthStore
+      .getState()
+      .setAuth(useAuthStore.getState().token as string, data);
     return data;
   } catch (err) {
     console.error("Failed to fetch user:", err);

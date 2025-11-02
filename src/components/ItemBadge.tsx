@@ -31,7 +31,7 @@ export default function ItemBadge({
 
   return (
     <Wrapper
-      type={clickable ? "button" : undefined} // ✅ prevent form submit issues
+      type={clickable ? "button" : undefined}
       className={cn(
         "inline-flex items-center gap-3 rounded-full pr-8 pl-1.5  py-2.5 border-2 transition-colors select-none",
         active

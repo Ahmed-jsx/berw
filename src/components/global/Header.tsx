@@ -1,22 +1,21 @@
 "use client";
-import { NAV_ITEMS } from "@/Const";
-import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/store/auth-store";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Button } from "../ui/button";
-import Logo from "./Logo";
-import CartButton from "./CartButton";
-import { Menu, User, X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
-  SheetTrigger,
   SheetHeader,
   SheetTitle,
-  SheetClose,
+  SheetTrigger,
 } from "@/components/ui/sheet";
-import { useState } from "react";
+import { NAV_ITEMS } from "@/Const";
+import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth-store";
+import { Menu, User } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
+import CartButton from "./CartButton";
+import Logo from "./Logo";
 
 const Header = () => {
   const pathname = usePathname();
@@ -25,23 +24,32 @@ const Header = () => {
   const auth = pathname === "/login" || pathname === "/sign-up";
   const isComingSoon = pathname === "/coming-soon";
   const { user, isAuthenticated } = useAuthStore();
+  const [scroll, setScroll] = useState(false);
 
-  const handleLinkClick = () => {
-    setIsOpen(false);
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      setScroll(window.scrollY > 0);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleLinkClick = () => setIsOpen(false);
 
   return (
     <header
       className={cn(
-        "fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-[95%] max-w-7xl mx-auto",
+        "fixed left-1/2 transform -translate-x-1/2 z-50 w-[95%] max-w-7xl mx-auto transition-all duration-500 ease-out",
         "sm:top-8 lg:top-16",
+        "top-4", // base top
+        scroll && "top-0 -translate-y-1 shadow-lg", // slide up on scroll
         auth && "top-2 sm:top-4",
         isComingSoon && "hidden"
       )}
     >
-      <nav className="relative rounded-2xl px-4 py-3 shadow-2xl overflow-hidden sm:px-6">
+      <nav className="relative rounded-2xl px-4 py-3 shadow-2xl overflow-hidden sm:px-6 transition-all duration-500">
         {/* Glass background with better contrast */}
-        <div className="absolute inset-0 bg-black/30 backdrop-blur-xl border border-white/20 rounded-2xl shadow-inner" />
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-xl border border-white/20 rounded-2xl shadow-inner transition-all duration-500" />
 
         <div className="relative z-10 flex items-center justify-between">
           {/* Left Section - Logo + Desktop Nav */}
@@ -78,7 +86,7 @@ const Header = () => {
             {/* Desktop User Menu / Login Button */}
             <div className="hidden sm:flex items-center">
               {isAuthenticated ? (
-                <Link href={user?.role === "admin" ? "/dashboard" : "/me"}>
+                <Link href={"/me"}>
                   <div className="bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm flex items-center gap-3 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95">
                     <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full p-1.5 shadow-lg">
                       <User className="size-4 text-black" />
@@ -147,16 +155,12 @@ const Header = () => {
                     ))}
                   </nav>
 
-                  {/* Mobile Auth Section - Bottom of menu */}
+                  {/* Mobile Auth Section */}
                   <div className="mt-auto pb-6">
                     <div className="border-t border-white/10 pt-6">
                       {isAuthenticated ? (
                         <div className="space-y-3">
-                          {/* Mobile User Profile */}
-                          <Link
-                            href={user?.role === "admin" ? "/dashboard" : "/me"}
-                            onClick={handleLinkClick}
-                          >
+                          <Link href={"/me"} onClick={handleLinkClick}>
                             <div className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 border border-white/20">
                               <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full p-2 shadow-lg shrink-0">
                                 <User className="size-5 text-black" />
@@ -188,10 +192,10 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* Mobile User Section - Only show on small screens when authenticated */}
+      {/* Mobile User Section */}
       {isAuthenticated && (
-        <div className="sm:hidden mt-3">
-          <Link href={user?.role === "admin" ? "/dashboard" : "/me"}>
+        <div className="sm:hidden mt-3 transition-all duration-500">
+          <Link href={"/me"}>
             <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-2xl px-4 py-3 shadow-xl">
               <div className="flex items-center gap-3 text-white">
                 <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full p-2 shadow-lg">

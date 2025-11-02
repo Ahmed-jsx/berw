@@ -18,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { ShoppingCart, SquarePlus } from "lucide-react";
 
 const data = {
   user: {
@@ -32,6 +33,11 @@ const data = {
       icon: IconDashboard,
     },
     {
+      title: "Orders",
+      url: "/dashboard/orders", // Fixed: Added leading slash
+      icon: ShoppingCart,
+    },
+    {
       title: "Products",
       url: "/dashboard/products", // Fixed: Added leading slash
       icon: IconListDetails,
@@ -40,6 +46,11 @@ const data = {
       title: "Users",
       url: "/dashboard/users", // Fixed: Added leading slash and proper path
       icon: IconUsers,
+    },
+    {
+      title: "Extras",
+      url: "/dashboard/extras", // Fixed: Added leading slash and proper path
+      icon: SquarePlus,
     },
   ],
 };

@@ -1,11 +1,9 @@
 "use client";
 
-import { useUserById } from "@/query/users";
-import { useAuthStore } from "@/store/auth-store";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -14,16 +12,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useUserById } from "@/query/users";
+import { useAuthStore } from "@/store/auth-store";
 import {
-  LogOut,
-  ShoppingBag,
-  TrendingUp,
-  DollarSign,
-  Package,
   Award,
   Calendar,
-  Mail,
+  DollarSign,
   Home,
+  LogOut,
+  Mail,
+  Package,
+  ShoppingBag,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { redirect, useRouter } from "next/navigation";

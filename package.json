@@ -34,11 +34,14 @@
     "axios": "^1.11.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.525.0",
     "motion": "^12.23.9",
     "next": "15.5.0",
     "next-themes": "^0.4.6",
     "nuqs": "^2.4.3",
+    "radix-ui": "^1.4.3",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-hook-form": "^7.62.0",
@@ -50,7 +53,7 @@
     "zustand": "^5.0.7"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
+    "@eslint/eslintrc": "latest",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "19.1.11",

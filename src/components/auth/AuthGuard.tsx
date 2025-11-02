@@ -11,10 +11,17 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const role = useAuthStore((s) => s.role);
 
+  // ✅ Allow free navigation in development
+  if (process.env.NODE_ENV === "development") {
+    return <>{children}</>;
+  }
+
+  // Redirect unauthenticated users away from protected routes
   if (!isAuthenticated && !isPublicPath) {
     redirect("/login");
   }
 
+  // Redirect authenticated users away from public routes
   if (isAuthenticated && isPublicPath) {
     if (role === "user") redirect("/me");
     if (role === "admin") redirect("/dashboard");

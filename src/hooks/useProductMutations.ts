@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, Product } from "@/lib/api";
+import { toast } from "sonner";
 
 export const useProductMutations = () => {
   const queryClient = useQueryClient();
@@ -21,9 +22,13 @@ export const useProductMutations = () => {
   });
 
   const remove = useMutation({
-    mutationFn: api.products.delete,
+    mutationFn: (id: number) => api.products.delete(id),
     onSuccess: () => {
+      toast.success("Product deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: () => {
+      toast.error("Failed to delete product");
     },
   });
 

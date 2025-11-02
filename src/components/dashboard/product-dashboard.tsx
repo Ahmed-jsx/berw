@@ -11,7 +11,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,31 +19,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -57,94 +31,20 @@ import { useProducts } from "@/hooks/useProducts";
 import { useProductMutations } from "@/hooks/useProductMutations";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Product } from "@/lib/api";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-// ✅ Schema for product form
-const productSchema = z.object({
-  product_name: z.string().min(1, "Name is required"),
-  product_category: z.string().min(1, "Category is required"),
-  product_price: z.string().min(1, "Price is required"),
-  product_components: z.string().optional(),
-  product_photo: z.string().url("Must be a valid URL"),
-  is_featured: z.boolean(),
-  has_points: z.boolean(),
-  // points: z.number().min(0).max(1000000).optional(),
-  // status: z.enum(["active", "inactive"]),
-});
-
-type ProductFormValues = z.infer<typeof productSchema>;
+import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 
 export function ProductDashboard() {
   const { data: products = [], isLoading } = useProducts();
-  const { create, update, remove } = useProductMutations();
-
+  const { remove } = useProductMutations();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-  // ✅ create form instance
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
-      product_name: "",
-      product_category: "",
-      product_price: "",
-      product_components: "",
-      product_photo: "",
-      is_featured: false,
-      has_points: false,
-      // points: 0,
-      // status: "active",
-    },
-  });
+  const router = useRouter();
 
   const filteredProducts = products.filter(
     (product) =>
       product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.product_category.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleCreate = (values: ProductFormValues) => {
-    create.mutate(values, {
-      onSuccess: () => {
-        setIsCreateDialogOpen(false);
-        form.reset();
-      },
-    });
-  };
-
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    form.reset({
-      product_name: product.product_name,
-      product_category: product.product_category,
-      product_price: product.product_price,
-      product_components: product.product_components,
-      product_photo: product.product_photo,
-      is_featured: product.is_featured,
-      has_points: product.has_points,
-      // points: product.points,
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleUpdate = (values: ProductFormValues) => {
-    if (!editingProduct) return;
-    update.mutate(
-      { id: editingProduct.product_id, body: values },
-      {
-        onSuccess: () => {
-          setIsEditDialogOpen(false);
-          setEditingProduct(null);
-          form.reset();
-        },
-      }
-    );
-  };
 
   const handleDelete = (id: number) => {
     remove.mutate(id);
@@ -173,168 +73,10 @@ export function ProductDashboard() {
             />
           </div>
 
-          <Dialog
-            open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Product
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Product</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(handleCreate)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={form.control}
-                    name="product_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="product_category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="product_price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="product_components"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="product_photo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Photo URL</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="is_featured"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between border p-3 rounded-lg">
-                        <FormLabel>Featured</FormLabel>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="has_points"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between border p-3 rounded-lg">
-                        <FormLabel>Has Points</FormLabel>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  {/* <FormField
-                    control={form.control}
-                    name="points"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Points</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  /> */}
-                  {/* <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="inactive">Inactive</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  /> */}
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsCreateDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit">Create</Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => router.push("/dashboard/products/create")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Product
+          </Button>
         </div>
 
         {/* Table */}
@@ -356,7 +98,6 @@ export function ProductDashboard() {
                     <TableHead>Name</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -367,23 +108,16 @@ export function ProductDashboard() {
                       <TableCell>{product.product_name}</TableCell>
                       <TableCell>{product.product_category}</TableCell>
                       <TableCell>${product.product_price}</TableCell>
-                      {/* <TableCell>
-                        <Badge
-                          variant={
-                            product.status === "active"
-                              ? "default"
-                              : "secondary"
-                          }
-                        >
-                          {product.status}
-                        </Badge>
-                      </TableCell> */}
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleEdit(product)}
+                            onClick={() =>
+                              router.push(
+                                `/dashboard/products/${product.product_id}`
+                              )
+                            }
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -429,34 +163,6 @@ export function ProductDashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Product</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(handleUpdate)}
-                className="space-y-4"
-              >
-                {/* Same fields as create form */}
-                {/* (You can extract this into <ProductFormFields /> to avoid duplication) */}
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsEditDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">Update</Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

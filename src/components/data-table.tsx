@@ -2,25 +2,6 @@
 
 import * as React from "react";
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type UniqueIdentifier,
-} from "@dnd-kit/core";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -28,11 +9,6 @@ import {
   ChevronsRight,
   CheckCircle,
   MoreVertical,
-  GripVertical,
-  Columns,
-  Loader,
-  Plus,
-  User,
   Mail,
   Phone,
   ShoppingBag,
@@ -40,40 +16,37 @@ import {
   Eye,
   Edit,
   Trash2,
+  Search,
+  X,
+  Filter,
 } from "lucide-react";
+
 import {
   ColumnDef,
-  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  Row,
   SortingState,
   useReactTable,
-  VisibilityState,
 } from "@tanstack/react-table";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-
 import { useUsers } from "@/hooks/useUsers";
 
-// Schema adapted to API
+// ---------------- SCHEMA ----------------
 export const schema = z.object({
   id: z.number(),
   name: z.string(),
   email: z.string().email(),
   phone: z.string(),
   orderCount: z.number().default(0),
-  points: z.number().default(0),
-  status: z.string().default("Active"),
+  is_frequent_visitor: z.boolean(),
   joinDate: z.string(),
 });
 
-// --- Skeleton Components ---
+// ---------------- SKELETON ----------------
 function TableSkeleton() {
   return (
     <div className="w-full space-y-6 p-6 bg-gray-50 min-h-screen">
@@ -109,27 +82,6 @@ function TableSkeleton() {
                     <div className="h-3 bg-gray-200 rounded w-28"></div>
                   </div>
                 </td>
-                <td className="px-4 py-4">
-                  <div className="flex justify-center">
-                    <div className="h-6 bg-gray-200 rounded-full w-12"></div>
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex justify-center">
-                    <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="h-4 bg-gray-200 rounded w-20"></div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex justify-center">
-                    <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
-                  </div>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -139,7 +91,7 @@ function TableSkeleton() {
   );
 }
 
-// --- Action Dropdown Component ---
+// ---------------- ACTION DROPDOWN ----------------
 function ActionDropdown({ userId }: { userId: number }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(false);
@@ -150,13 +102,11 @@ function ActionDropdown({ userId }: { userId: number }) {
   };
 
   const handleEdit = () => {
-    // Add edit functionality here
     console.log("Edit user", userId);
     setIsOpen(false);
   };
 
   const handleDelete = () => {
-    // Add delete functionality here
     console.log("Delete user", userId);
     setIsOpen(false);
   };
@@ -173,35 +123,29 @@ function ActionDropdown({ userId }: { userId: number }) {
 
       {isOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-
-          {/* Dropdown Menu */}
           <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
             <button
               onClick={handleViewDetails}
               className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <Eye className="h-4 w-4" />
-              View Details
+              <Eye className="h-4 w-4" /> View Details
             </button>
             <button
               onClick={handleEdit}
               className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <Edit className="h-4 w-4" />
-              Edit User
+              <Edit className="h-4 w-4" /> Edit User
             </button>
             <hr className="my-1 border-gray-100" />
             <button
               onClick={handleDelete}
               className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
             >
-              <Trash2 className="h-4 w-4" />
-              Delete User
+              <Trash2 className="h-4 w-4" /> Delete User
             </button>
           </div>
         </>
@@ -209,275 +153,245 @@ function ActionDropdown({ userId }: { userId: number }) {
     </div>
   );
 }
-function DragHandle({ id }: { id: number }) {
-  const { attributes, listeners } = useSortable({ id });
+
+// ---------------- FREQUENT VISITOR FILTER ----------------
+function FrequentVisitorFilter({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const options = ["All", "Frequent", "Not Frequent"];
 
   return (
-    <button
-      {...attributes}
-      {...listeners}
-      className="p-2 text-gray-500 hover:bg-gray-100 rounded cursor-grab active:cursor-grabbing"
-    >
-      <GripVertical className="h-4 w-4" />
-      <span className="sr-only">Drag to reorder</span>
-    </button>
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+      >
+        <Filter className="h-4 w-4" />
+        <span>Frequent Visitor: {value || "All"}</span>
+        <ChevronDown className="h-4 w-4" />
+      </button>
+
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute left-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+            {options.map((option) => (
+              <button
+                key={option}
+                onClick={() => {
+                  onChange(option === "All" ? "" : option);
+                  setIsOpen(false);
+                }}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
-// --- Columns ---
-const columns: ColumnDef<z.infer<typeof schema>>[] = [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-  {
-    accessorKey: "name",
-    header: "User",
-    cell: ({ row }) => {
-      const user = row.original;
-      const initials = user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase();
-
-      return (
-        <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-100">
-            <div className="flex h-full w-full items-center justify-center text-gray-600 font-medium">
-              {initials}
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-medium">{user.name}</span>
-            <span className="text-sm text-gray-500">ID: {user.id}</span>
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "email",
-    header: "Contact",
-    cell: ({ row }) => (
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 text-sm">
-          <Mail className="h-4 w-4 text-gray-400" />
-          <span>{row.original.email}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Phone className="h-4 w-4 text-gray-400" />
-          <span>{row.original.phone}</span>
-        </div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "orderCount",
-    header: () => <div className="text-center">Orders</div>,
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center gap-2">
-        <ShoppingBag className="h-4 w-4 text-blue-500" />
-        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium border border-gray-300 bg-transparent text-gray-700">
-          {row.original.orderCount}
-        </span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "points",
-    header: () => <div className="text-center">Points</div>,
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center gap-2">
-        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800">
-          {row.original.points.toLocaleString()}
-        </span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.original.status;
-      const getStatusClass = () => {
-        switch (status) {
-          case "Active":
-            return "bg-green-100 text-green-800";
-          case "Inactive":
-            return "bg-yellow-100 text-yellow-800";
-          case "Pending":
-            return "bg-blue-100 text-blue-800";
-          default:
-            return "border border-gray-300 bg-transparent text-gray-700";
-        }
-      };
-
-      return (
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium gap-1 ${getStatusClass()}`}
-        >
-          {status === "Active" && <CheckCircle className="h-3 w-3" />}
-          {status === "Pending" && <Loader className="h-3 w-3 animate-spin" />}
-          {status}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: "joinDate",
-    header: "Join Date",
-    cell: ({ row }) => (
-      <div className="text-sm">
-        {new Date(row.original.joinDate).toLocaleDateString()}
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    header: () => <div className="text-center">Actions</div>,
-    cell: ({ row }) => <ActionDropdown userId={row.original.id} />,
-    enableSorting: false,
-  },
-];
-
-// --- Draggable Row ---
-function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({
-    id: row.original.id,
-  });
-
-  return (
-    <tr
-      ref={setNodeRef}
-      className={`border-b hover:bg-gray-50 ${
-        row.getIsSelected() ? "bg-blue-50" : ""
-      } ${isDragging ? "opacity-50 z-10" : ""}`}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-    >
-      {row.getVisibleCells().map((cell) => (
-        <td key={cell.id} className="px-4 py-4">
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </td>
-      ))}
-    </tr>
-  );
-}
-
-// --- Main Component ---
+// ---------------- MAIN COMPONENT ----------------
 export function DataTable() {
   const { data, isLoading } = useUsers();
   const router = useRouter();
 
-  // ✅ Memoize the transformed users data to prevent infinite re-renders
   const users = React.useMemo(() => {
     if (!data?.users) return [];
-
     return data.users.map((u) => ({
       id: u.id,
       name: u.name,
       email: u.email,
-      phone: u.number, // API gives "number"
-      orderCount: 0, // placeholder until backend supports
-      points: 0, // placeholder
-      status: "Active", // default status
+      phone: u.number,
+      orderCount: u.total_orders,
+
+      is_frequent_visitor: u.is_frequent_visitor,
       joinDate: u.created_at,
     }));
   }, [data?.users]);
 
-  const [tableData, setTableData] = React.useState<typeof users>([]);
-
-  // ✅ Fixed: Now users is memoized, so this won't cause infinite re-renders
-  React.useEffect(() => {
-    if (users.length > 0) {
-      setTableData(users);
-    }
-  }, [users]);
-
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-
-  const sortableId = React.useId();
-  const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
-    useSensor(KeyboardSensor)
-  );
-
-  const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => tableData.map(({ id }) => id),
-    [tableData]
-  );
+  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [visitorFilter, setVisitorFilter] = React.useState("");
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "orderCount", desc: true }, // ✅ Default: highest orders first
+  ]);
 
   const table = useReactTable({
-    data: tableData,
-    columns,
+    data: users,
+    columns: [
+      {
+        accessorKey: "name",
+        header: "User",
+        cell: ({ row }) => {
+          const user = row.original;
+          const initials = user.name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase();
+          return (
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center font-medium text-gray-600">
+                {initials}
+              </div>
+              <div>
+                <div className="font-medium">{user.name}</div>
+                <div className="text-sm text-gray-500">ID: {user.id}</div>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "email",
+        header: "Contact",
+        cell: ({ row }) => (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-sm">
+              <Mail className="h-4 w-4 text-gray-400" /> {row.original.email}
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Phone className="h-4 w-4 text-gray-400" /> {row.original.phone}
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "orderCount",
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center gap-2"
+          >
+            Orders
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${
+                column.getIsSorted() === "asc" ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+        ),
+        cell: ({ row }) => (
+          <div className="flex justify-center items-center gap-2">
+            <ShoppingBag className="h-4 w-4 text-blue-500" />
+            <span className="text-sm">{row.original.orderCount}</span>
+          </div>
+        ),
+      },
+
+      {
+        accessorKey: "is_frequent_visitor",
+        header: "Frequent Visitor",
+        cell: ({ row }) => {
+          const isFrequent = row.original.is_frequent_visitor;
+          return (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                isFrequent
+                  ? "bg-green-100 text-green-800"
+                  : "bg-yellow-100 text-yellow-800"
+              }`}
+            >
+              {isFrequent ? (
+                <>
+                  <CheckCircle className="h-3 w-3" /> Frequent
+                </>
+              ) : (
+                "Not Frequent"
+              )}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "joinDate",
+        header: "Join Date",
+        cell: ({ row }) => new Date(row.original.joinDate).toLocaleDateString(),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => <ActionDropdown userId={row.original.id} />,
+      },
+    ],
     state: {
+      globalFilter,
       sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-      pagination,
     },
-    getRowId: (row) => row.id.toString(),
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
+    getPaginationRowModel: getPaginationRowModel(),
   });
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (active && over && active.id !== over.id) {
-      setTableData((old) => {
-        const oldIndex = dataIds.indexOf(active.id);
-        const newIndex = dataIds.indexOf(over.id);
-        return arrayMove(old, oldIndex, newIndex);
-      });
+  // Filter logic
+  React.useEffect(() => {
+    if (visitorFilter) {
+      table
+        .getColumn("is_frequent_visitor")
+        ?.setFilterValue(visitorFilter === "Frequent");
+    } else {
+      table.getColumn("is_frequent_visitor")?.setFilterValue(undefined);
     }
-  }
+  }, [visitorFilter, table]);
 
-  // ✅ Show skeleton loading state instead of plain text
-  if (isLoading) {
-    return <TableSkeleton />;
-  }
+  if (isLoading) return <TableSkeleton />;
 
   return (
     <div className="w-full space-y-6 p-6 bg-gray-50 min-h-screen">
-      <DndContext
-        collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis]}
-        onDragEnd={handleDragEnd}
-        sensors={sensors}
-        id={sortableId}
-      >
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex-1 w-full sm:max-w-md relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
+            {globalFilter && (
+              <button
+                onClick={() => setGlobalFilter("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          <FrequentVisitorFilter
+            value={visitorFilter}
+            onChange={setVisitorFilter}
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 sticky top-0">
+          <thead className="bg-gray-50">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-sm font-medium text-gray-900"
+                    className="px-4 py-3 text-left text-sm font-medium text-gray-900 cursor-pointer select-none"
+                    onClick={header.column.getToggleSortingHandler()}
                   >
                     {header.isPlaceholder
                       ? null
@@ -492,18 +406,25 @@ export function DataTable() {
           </thead>
           <tbody>
             {table.getRowModel().rows?.length ? (
-              <SortableContext
-                items={dataIds}
-                strategy={verticalListSortingStrategy}
-              >
-                {table.getRowModel().rows.map((row) => (
-                  <DraggableRow key={row.id} row={row} />
-                ))}
-              </SortableContext>
+              table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className="border-b hover:bg-gray-50 transition"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-4 py-4">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : (
               <tr>
                 <td
-                  colSpan={columns.length}
+                  colSpan={table.getAllColumns().length}
                   className="h-24 text-center text-gray-500"
                 >
                   No users found.
@@ -512,7 +433,63 @@ export function DataTable() {
             )}
           </tbody>
         </table>
-      </DndContext>
+      </div>
+
+      {/* Pagination */}
+      <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">Rows per page:</span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => table.setPageSize(Number(e.target.value))}
+              className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              {[10, 20, 30, 40, 50].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  {pageSize}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="text-sm text-gray-700">
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

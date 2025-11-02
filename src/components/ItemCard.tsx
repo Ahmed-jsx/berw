@@ -11,7 +11,6 @@ interface ItemCardProps {
   description: string | null;
   price: number;
   product_photo?: string | null;
-  product_data?: string | null;
   isFeatured?: boolean;
 }
 
@@ -35,7 +34,6 @@ const ItemCard = ({
   description,
   price,
   product_photo,
-  product_data,
 }: ItemCardProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const controls = useAnimation();
@@ -48,14 +46,7 @@ const ItemCard = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Prefer product_photo, fallback to product_data
-  const imageBase64 = product_photo || product_data;
-  const imageSrc =
-    imageBase64 && imageBase64.length > 50
-      ? imageBase64.startsWith("data:image")
-        ? imageBase64
-        : `data:image/jpeg;base64,${imageBase64}`
-      : "/monkey1.png";
+  // Prefer product_photo, fallback to
 
   // Disable animation on mobile
   const motionProps = isMobile
@@ -69,7 +60,7 @@ const ItemCard = ({
     >
       {/* Background Image */}
       <Image
-        src={imageSrc}
+        src={product_photo || "/monkey1.png"}
         alt={name}
         fill
         className="object-cover rounded-2xl transition-all duration-500 group-hover:scale-105"

@@ -54,7 +54,7 @@ export const api = {
   products: {
     // Get all products
     getAll: async (): Promise<Product[]> => {
-      const res = await fetch(`${API_URL}/products`, { cache: "no-store" });
+      const res = await fetch(`${API_URL}/products`, { cache: "default" });
       if (!res.ok) throw new Error("Failed to fetch products");
 
       const data = await res.json();
@@ -74,13 +74,26 @@ export const api = {
       const res = await fetch(`${API_URL}/products/${id}`);
       if (!res.ok) throw new Error(`Failed to fetch product ${id}`);
       const data: unknown = await res.json();
-      const parsed = z
-        .object({
-          message: z.string(),
-          product: z.array(ProductSchema), // Changed to array
-        })
-        .parse(data);
-      return parsed.product[0]; // Return first item from array
+
+      // Try to parse as object first (most common API pattern)
+      try {
+        const parsed = z
+          .object({
+            message: z.string(),
+            product: ProductSchema, // Single object, not array
+          })
+          .parse(data);
+        return parsed.product;
+      } catch (error) {
+        // Fallback: try parsing as array if the API returns array format
+        const parsed = z
+          .object({
+            message: z.string(),
+            product: z.array(ProductSchema),
+          })
+          .parse(data);
+        return parsed.product[0];
+      }
     },
 
     // Create product

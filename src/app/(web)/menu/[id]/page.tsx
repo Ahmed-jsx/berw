@@ -103,6 +103,7 @@ function SingleProductPage({ params }: PageProps) {
     );
 
     const cartItem = {
+      type: "product" as const,
       product_id: product.product_id,
       product_name: product.product_name,
       product_price: parseFloat(product.product_price),

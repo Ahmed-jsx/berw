@@ -9,7 +9,7 @@ interface ItemCardProps {
   id: number;
   name: string;
   description: string | null;
-  price: number;
+  price?: number | string | null;
   product_photo?: string | null;
   isFeatured?: boolean;
 }
@@ -24,7 +24,7 @@ const itemVariants = {
   hover: {
     y: "0%",
     opacity: 1,
-    transition: { duration: 0.4, ease: [0.17, 0.67, 0.83, 0.67] },
+    transition: { duration: 0.4, ease: "easeInOut" },
   },
 };
 
@@ -32,7 +32,7 @@ const ItemCard = ({
   id,
   name,
   description,
-  price,
+  price = 0,
   product_photo,
 }: ItemCardProps) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -46,7 +46,18 @@ const ItemCard = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Prefer product_photo, fallback to
+  // ✅ Ensure price is always a number
+  const numericPrice = Number(price);
+  const displayPrice =
+    !isNaN(numericPrice) && numericPrice > 0
+      ? `${numericPrice.toFixed(2)} EGP`
+      : "—";
+
+  // ✅ Image fallback
+  const imageSrc =
+    product_photo && product_photo.trim() !== ""
+      ? product_photo
+      : "/monkey1.png";
 
   // Disable animation on mobile
   const motionProps = isMobile
@@ -58,24 +69,28 @@ const ItemCard = ({
       {...motionProps}
       className="relative group rounded-2xl h-[350px] w-full max-w-[400px] overflow-hidden cursor-pointer shadow-md"
     >
-      {/* Background Image */}
+      {/* ✅ Background Image with fallback */}
       <Image
-        src={product_photo || "/monkey1.png"}
-        alt={name}
+        src={"/monkey1.png"}
+        alt={name || "Product"}
         fill
         className="object-cover rounded-2xl transition-all duration-500 group-hover:scale-105"
+        onError={(e) => {
+          const target = e.currentTarget as HTMLImageElement;
+          target.src = "/monkey1.png";
+        }}
       />
 
-      {/* Overlay (stronger on mobile for text visibility) */}
+      {/* ✅ Improved overlay with gradient for better text readability */}
       <div
-        className={`absolute inset-0 transition-all duration-300 ${
+        className={`absolute inset-0 transition-all duration-500 ${
           isMobile
-            ? "bg-black/20"
-            : "bg-black/20 opacity-0 group-hover:opacity-50"
+            ? "bg-gradient-to-t from-black/70 via-black/30 to-transparent"
+            : "opacity-0 group-hover:opacity-100 bg-gradient-to-t from-black/70 via-black/40 to-transparent"
         }`}
       />
 
-      {/* Text & content */}
+      {/* Content */}
       <div
         className={`absolute inset-0 flex flex-col justify-end p-5 ${
           isMobile ? "pb-6" : ""
@@ -91,7 +106,7 @@ const ItemCard = ({
             )}
             <div className="flex items-center justify-between mt-3">
               <span className="text-white font-bold text-base">
-                {price.toFixed(2)} EGP
+                {displayPrice}
               </span>
               <button className="bg-white text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">
                 Customize
@@ -120,7 +135,7 @@ const ItemCard = ({
               variants={itemVariants}
               className="text-white text-lg font-semibold"
             >
-              {price.toFixed(2)} EGP
+              {displayPrice}
             </motion.p>
 
             <motion.button

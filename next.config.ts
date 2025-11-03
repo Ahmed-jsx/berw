@@ -10,12 +10,7 @@ const nextConfig: NextConfig = {
   },
   typedRoutes: true,
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-    ],
+    domains: ["res.cloudinary.com"], // ✅ Allow Cloudinary URLs
   },
 };
 

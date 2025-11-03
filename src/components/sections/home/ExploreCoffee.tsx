@@ -2,25 +2,23 @@
 
 import ItemBadge from "@/components/ItemBadge";
 import ItemCard from "@/components/ItemCard";
-import { useProducts } from "@/hooks/useProducts";
-import { useCheckoutProcess } from "@/query/useOrderQueries";
-import { useAuthStore } from "@/store/auth-store";
-import { useCoffeeStore } from "@/store/coffeeStore";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
+import { useProducts } from "@/hooks/useProducts";
+import { useCheckoutProcess } from "@/query/useOrderQueries";
+import { useCoffeeStore } from "@/store/coffeeStore";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 export function ExploreCoffee() {
   const router = useRouter();
   const { active, setActive } = useCoffeeStore();
   const { data: products, isLoading, error } = useProducts();
   const { checkout, isCheckingOut, checkoutError } = useCheckoutProcess();
-  const { user } = useAuthStore();
 
   const [currentIndex, setCurrentIndex] = useState(0);
 

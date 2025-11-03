@@ -7,13 +7,26 @@ import { Extra } from "@/types/extras";
 
 type CheckoutExtras = number[];
 
-interface CartItem extends Omit<CheckoutItem, "extras"> {
+interface CartItem {
+  // Common fields
+  type: "product" | "merchant";
+  quantity: number;
+  notes?: string;
+
+  // Product-specific fields
+  product_id?: number;
   product_name?: string;
   product_price?: number;
+  product_photo?: string;
   product_category?: string;
-  extras: CheckoutExtras; // always store IDs
-  extrasData?: Extra[]; // hydrated details for UI + price calculations
-  notes?: string;
+  extras?: CheckoutExtras; // Only for products
+  extrasData?: Extra[]; // Hydrated extras for UI
+
+  // Merchant-specific fields
+  merchant_id?: number;
+  merchant_name?: string;
+  merchant_price?: number;
+  merchant_photo?: string;
 }
 
 interface OrderStore {
@@ -35,24 +48,31 @@ interface OrderStore {
   isOrderDetailsModalOpen: boolean;
   selectedOrderForDetails: Order | null;
 
-  // 🔹 Extras helper
+  // Extras helper
   getExtrasDataByIds: (ids: number[], allExtras: Extra[]) => Extra[];
 
   // Cart Actions
-  addToCart: (item: CartItem, allExtras: Extra[]) => void;
+  addToCart: (item: CartItem, allExtras?: Extra[]) => void;
   updateCartItem: (
-    productId: number,
+    itemId: { product_id?: number; merchant_id?: number },
     updates: Partial<CartItem>,
-    allExtras: Extra[]
+    allExtras?: Extra[]
   ) => void;
-  removeFromCart: (productId: number) => void;
+  removeFromCart: (itemId: {
+    product_id?: number;
+    merchant_id?: number;
+  }) => void;
   clearCart: () => void;
-  updateCartItemQuantity: (productId: number, quantity: number) => void;
+  updateCartItemQuantity: (
+    itemId: { product_id?: number; merchant_id?: number },
+    quantity: number
+  ) => void;
 
   // Checkout Actions
   setCheckingOut: (loading: boolean) => void;
   setCheckoutError: (error: string | null) => void;
   setCurrentOrder: (order: Order | null) => void;
+  formatCheckoutPayload: (userId: number) => any;
 
   // Orders Actions
   setOrders: (orders: Order[]) => void;
@@ -91,23 +111,38 @@ export const useOrderStore = create<OrderStore>()(
         isOrderDetailsModalOpen: false,
         selectedOrderForDetails: null,
 
-        // 🔹 Helper to hydrate extras by ID
+        // Helper to hydrate extras by ID
         getExtrasDataByIds: (ids: number[] = [], allExtras: Extra[] = []) => {
           const lookup = new Map(allExtras.map((ex) => [ex.id, ex]));
           return ids.map((id) => lookup.get(id)).filter(Boolean) as Extra[];
         },
 
-        // 🔹 Add to cart (hydrate extrasData before saving)
-        addToCart: (item, allExtras) => {
-          set((state) => {
-            const existingItemIndex = state.cartItems.findIndex(
-              (cartItem) => cartItem.product_id === item.product_id
-            );
+        // Add to cart (supports both products and merchants)
+        addToCart: (item, allExtras = []) => {
+          console.log("🛒 addToCart called:", { item, allExtras });
 
-            const hydrateExtras = get().getExtrasDataByIds(
-              item.extras || [],
-              allExtras
-            );
+          set((state) => {
+            const isProduct = item.type === "product";
+            const existingItemIndex = state.cartItems.findIndex((cartItem) => {
+              if (isProduct) {
+                return (
+                  cartItem.type === "product" &&
+                  cartItem.product_id === item.product_id
+                );
+              } else {
+                return (
+                  cartItem.type === "merchant" &&
+                  cartItem.merchant_id === item.merchant_id
+                );
+              }
+            });
+
+            // Hydrate extras for products
+            const hydrateExtras = isProduct
+              ? get().getExtrasDataByIds(item.extras || [], allExtras)
+              : [];
+
+            console.log("💎 Hydrated extras:", hydrateExtras);
 
             if (existingItemIndex >= 0) {
               const updatedItems = [...state.cartItems];
@@ -116,69 +151,150 @@ export const useOrderStore = create<OrderStore>()(
               updatedItems[existingItemIndex] = {
                 ...existing,
                 quantity: existing.quantity + item.quantity,
-                extras: Array.from(new Set([...(existing.extras || []), ...(item.extras || [])])),
-                extrasData: Array.from(
-                  new Map(
-                    [...(existing.extrasData || []), ...hydrateExtras].map((e) => [e.id, e])
-                  ).values()
-                ),
+                ...(isProduct && {
+                  extras: Array.from(
+                    new Set([
+                      ...(existing.extras || []),
+                      ...(item.extras || []),
+                    ])
+                  ),
+                  extrasData: Array.from(
+                    new Map(
+                      [...(existing.extrasData || []), ...hydrateExtras].map(
+                        (e) => [e.id, e]
+                      )
+                    ).values()
+                  ),
+                }),
               };
 
+              console.log(
+                "✅ Updated existing item:",
+                updatedItems[existingItemIndex]
+              );
               return { cartItems: updatedItems };
             }
 
             const newItem: CartItem = {
               ...item,
-              extras: item.extras || [],
-              extrasData: hydrateExtras,
+              ...(isProduct && {
+                extras: item.extras || [],
+                extrasData: hydrateExtras,
+              }),
             };
 
+            console.log("✅ Added new item:", newItem);
             return { cartItems: [...state.cartItems, newItem] };
           });
         },
 
-        // 🔹 Update cart item (rehydrate extrasData if extras changed)
-        updateCartItem: (productId, updates, allExtras) => {
+        // Update cart item
+        updateCartItem: (itemId, updates, allExtras = []) => {
           set((state) => ({
             cartItems: state.cartItems.map((item) => {
-              if (item.product_id !== productId) return item;
+              const matches =
+                (itemId.product_id &&
+                  item.type === "product" &&
+                  item.product_id === itemId.product_id) ||
+                (itemId.merchant_id &&
+                  item.type === "merchant" &&
+                  item.merchant_id === itemId.merchant_id);
 
-              const updatedExtras = updates.extras ?? item.extras;
-              const hydrateExtras = get().getExtrasDataByIds(
-                updatedExtras,
-                allExtras
-              );
+              if (!matches) return item;
 
-              return {
-                ...item,
-                ...updates,
-                extras: updatedExtras,
-                extrasData: hydrateExtras,
-              };
+              if (item.type === "product" && updates.extras) {
+                const hydrateExtras = get().getExtrasDataByIds(
+                  updates.extras,
+                  allExtras
+                );
+                return {
+                  ...item,
+                  ...updates,
+                  extrasData: hydrateExtras,
+                };
+              }
+
+              return { ...item, ...updates };
             }),
           }));
         },
 
-        removeFromCart: (productId) => {
-          set((state) => ({
-            cartItems: state.cartItems.filter(
-              (item) => item.product_id !== productId
-            ),
-          }));
+        removeFromCart: (itemId) => {
+          console.log("removeFromCart called with:", itemId);
+          set((state) => {
+            const filteredItems = state.cartItems.filter((item) => {
+              if (itemId.product_id) {
+                const shouldKeep = !(
+                  item.type === "product" &&
+                  item.product_id === itemId.product_id
+                );
+                console.log(
+                  `Product check: item.type=${item.type}, item.product_id=${item.product_id}, shouldKeep=${shouldKeep}`
+                );
+                return shouldKeep;
+              }
+              if (itemId.merchant_id) {
+                const shouldKeep = !(
+                  item.type === "merchant" &&
+                  item.merchant_id === itemId.merchant_id
+                );
+                console.log(
+                  `Merchant check: item.type=${item.type}, item.merchant_id=${item.merchant_id}, shouldKeep=${shouldKeep}`
+                );
+                return shouldKeep;
+              }
+              return true;
+            });
+            console.log("Filtered items:", filteredItems);
+            return { cartItems: filteredItems };
+          });
         },
 
         clearCart: () => set({ cartItems: [], cartTotal: 0 }),
 
-        updateCartItemQuantity: (productId, quantity) => {
+        updateCartItemQuantity: (itemId, quantity) => {
           if (quantity <= 0) {
-            get().removeFromCart(productId);
+            get().removeFromCart(itemId);
             return;
           }
           set((state) => ({
-            cartItems: state.cartItems.map((item) =>
-              item.product_id === productId ? { ...item, quantity } : item
-            ),
+            cartItems: state.cartItems.map((item) => {
+              const matches =
+                (itemId.product_id &&
+                  item.type === "product" &&
+                  item.product_id === itemId.product_id) ||
+                (itemId.merchant_id &&
+                  item.type === "merchant" &&
+                  item.merchant_id === itemId.merchant_id);
+
+              return matches ? { ...item, quantity } : item;
+            }),
           }));
+        },
+
+        // Format checkout payload for API
+        formatCheckoutPayload: (userId: number) => {
+          const { cartItems } = get();
+
+          return {
+            user_id: userId,
+            items: cartItems.map((item) => {
+              if (item.type === "product") {
+                return {
+                  type: "product",
+                  product_id: item.product_id!,
+                  quantity: item.quantity,
+                  extras: item.extras || [],
+                };
+              } else {
+                return {
+                  type: "merchant",
+                  merchant_id: item.merchant_id!,
+                  quantity: item.quantity,
+                };
+              }
+            }),
+          };
         },
 
         setCheckingOut: (loading) => set({ isCheckingOut: loading }),
@@ -203,12 +319,16 @@ export const useOrderStore = create<OrderStore>()(
           })),
         deselectOrder: (orderId) =>
           set((state) => ({
-            selectedOrderIds: state.selectedOrderIds.filter((id) => id !== orderId),
+            selectedOrderIds: state.selectedOrderIds.filter(
+              (id) => id !== orderId
+            ),
           })),
         clearOrderSelection: () => set({ selectedOrderIds: [] }),
 
         setOrderFilters: (filters) =>
-          set((state) => ({ orderFilters: { ...state.orderFilters, ...filters } })),
+          set((state) => ({
+            orderFilters: { ...state.orderFilters, ...filters },
+          })),
         clearOrderFilters: () => set({ orderFilters: {} }),
 
         openOrderDetailsModal: (order) =>
@@ -227,19 +347,30 @@ export const useOrderStore = create<OrderStore>()(
 
         getCartTotalPrice: () =>
           get().cartItems.reduce((total, item) => {
-            const basePrice = (item.product_price || 0) * item.quantity;
-            const extrasPrice =
-              item.extrasData?.reduce(
-                (sum, ex) => sum + (ex.price || 0) * item.quantity,
-                0
-              ) ?? 0;
-            return total + basePrice + extrasPrice;
+            let itemPrice = 0;
+
+            if (item.type === "product") {
+              const basePrice = (item.product_price || 0) * item.quantity;
+              const extrasPrice =
+                item.extrasData?.reduce(
+                  (sum, ex) => sum + (ex.price || 0) * item.quantity,
+                  0
+                ) ?? 0;
+              itemPrice = basePrice + extrasPrice;
+            } else {
+              itemPrice = (item.merchant_price || 0) * item.quantity;
+            }
+
+            return total + itemPrice;
           }, 0),
 
         getFilteredOrders: () => {
           const { orders, orderFilters } = get();
           return orders.filter((order) => {
-            if (orderFilters.status && order.order_status !== orderFilters.status) {
+            if (
+              orderFilters.status &&
+              order.order_status !== orderFilters.status
+            ) {
               return false;
             }
             if (orderFilters.searchTerm) {

@@ -12,6 +12,8 @@ import {
   Loader2,
   CheckCircle,
   Trash,
+  ShoppingBag,
+  Package,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,6 +34,7 @@ export function CheckoutSection() {
     clearCart,
     getCartTotalPrice,
     getCartItemsCount,
+    formatCheckoutPayload,
   } = useOrderStore();
 
   const {
@@ -53,7 +56,6 @@ export function CheckoutSection() {
   // Watch for successful checkout
   useEffect(() => {
     if (isSuccess && checkoutData) {
-      // Convert total_price to number if it's a string
       const totalPrice =
         typeof checkoutData.total_price === "string"
           ? parseFloat(checkoutData.total_price)
@@ -68,11 +70,10 @@ export function CheckoutSection() {
 
       toast.success("Order placed successfully!");
       setOrderConfirmed(true);
-      reset(); // Reset mutation state
+      reset();
     }
   }, [isSuccess, checkoutData, reset]);
 
-  // Watch for checkout errors
   useEffect(() => {
     if (checkoutError) {
       toast.error(checkoutError);
@@ -83,53 +84,76 @@ export function CheckoutSection() {
   const subtotal = useMemo(() => getCartTotalPrice(), [cartItems]);
   const pointsDiscount = useMemo(() => {
     const points = parseInt(redeemPoints) || 0;
-    return Math.min(points * 0.1, subtotal); // 1 point = 0.1 EGP, max discount = subtotal
+    return Math.min(points * 0.1, subtotal);
   }, [redeemPoints, subtotal]);
   const total = subtotal - pointsDiscount;
 
-  // Handle quantity updates
-  const handleQuantityChange = (productId: number, change: number) => {
-    const item = cartItems.find((item) => item.product_id === productId);
+  // Handle quantity updates - now supports both products and merchants
+  const handleQuantityChange = (
+    itemId: { product_id?: number; merchant_id?: number },
+    change: number
+  ) => {
+    const item = cartItems.find(
+      (item) =>
+        (itemId.product_id &&
+          item.type === "product" &&
+          item.product_id === itemId.product_id) ||
+        (itemId.merchant_id &&
+          item.type === "merchant" &&
+          item.merchant_id === itemId.merchant_id)
+    );
     if (!item) return;
 
     const newQuantity = item.quantity + change;
     if (newQuantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(itemId);
       toast.success("Item removed from cart");
     } else {
-      updateCartItemQuantity(productId, newQuantity);
+      updateCartItemQuantity(itemId, newQuantity);
     }
   };
 
-  // Handle item removal
-  const handleRemoveItem = (productId: number) => {
-    const item = cartItems.find((item) => item.product_id === productId);
-    removeFromCart(productId);
-    toast.success(`${item?.product_name || "Item"} removed from cart`);
+  // Handle item removal - now supports both products and merchants
+  const handleRemoveItem = (itemId: {
+    product_id?: number;
+    merchant_id?: number;
+  }) => {
+    const item = cartItems.find(
+      (item) =>
+        (itemId.product_id &&
+          item.type === "product" &&
+          item.product_id === itemId.product_id) ||
+        (itemId.merchant_id &&
+          item.type === "merchant" &&
+          item.merchant_id === itemId.merchant_id)
+    );
+    const itemName =
+      item?.type === "product" ? item.product_name : item?.merchant_name;
+    removeFromCart(itemId);
+    toast.success(`${itemName || "Item"} removed from cart`);
   };
 
   // Handle points redemption
-  const handleRedeemPoints = () => {
-    const points = parseInt(redeemPoints);
-    if (!points || points <= 0) {
-      toast.error("Please enter valid points amount");
-      return;
-    }
+  // const handleRedeemPoints = () => {
+  //   const points = parseInt(redeemPoints);
+  //   if (!points || points <= 0) {
+  //     toast.error("Please enter valid points amount");
+  //     return;
+  //   }
 
-    if (points > (user?.points || 0)) {
-      toast.error("Insufficient points balance");
-      return;
-    }
+  //   if (points > (user?.points || 0)) {
+  //     toast.error("Insufficient points balance");
+  //     return;
+  //   }
 
-    setIsRedeeming(true);
-    // Simulate redemption delay
-    setTimeout(() => {
-      setIsRedeeming(false);
-      toast.success(`${points} points redeemed successfully!`);
-    }, 1000);
-  };
+  //   setIsRedeeming(true);
+  //   setTimeout(() => {
+  //     setIsRedeeming(false);
+  //     toast.success(`${points} points redeemed successfully!`);
+  //   }, 1000);
+  // };
 
-  // Handle checkout
+  // Handle checkout - use formatCheckoutPayload
   const handleCheckout = () => {
     if (!isAuthenticated || !user) {
       toast.error("Please login to continue");
@@ -142,23 +166,18 @@ export function CheckoutSection() {
       return;
     }
 
-    // Convert cart items to checkout format
-    const checkoutItems = cartItems.map((item) => ({
-      product_id: item.product_id,
-      quantity: item.quantity,
-      extras: item.extras || [],
-    }));
+    // Use the formatCheckoutPayload from the store
+    const payload = formatCheckoutPayload(user.id);
 
-    // Call checkout - it will handle success/error via the mutation callbacks
-    checkout(user.id, checkoutItems);
+    // The checkout mutation should handle the full payload
+    checkout(payload.user_id, payload.items);
   };
 
-  // Order Confirmation UI
+  // Order Confirmation UI (unchanged)
   if (orderConfirmed && orderDetails) {
     return (
       <div className="min-h-screen max-w-[calc(100vw-6rem)] my-8 mx-auto rounded-[40px] bg-secondary p-6 pt-40">
         <div className="max-w-2xl mx-auto">
-          {/* Success Header */}
           <div className="text-center mb-8">
             <div className="bg-green-500 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
               <CheckCircle className="h-12 w-12 text-white" />
@@ -171,10 +190,8 @@ export function CheckoutSection() {
             </p>
           </div>
 
-          {/* Order Details Card */}
           <Card className="p-8 bg-white/10 border-0 rounded-3xl mb-6">
             <div className="space-y-6">
-              {/* Order Info */}
               <div className="flex justify-between items-center border-b border-white/20 pb-4">
                 <div>
                   <h3 className="text-white font-semibold text-lg">
@@ -186,12 +203,14 @@ export function CheckoutSection() {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-white">
-                    {orderDetails.total_price.toFixed(2)} EGP
+                    {typeof orderDetails.total_price === "string"
+                      ? parseFloat(orderDetails.total_price).toFixed(2)
+                      : orderDetails.total_price.toFixed(2)}{" "}
+                    EGP{" "}
                   </p>
                 </div>
               </div>
 
-              {/* Order Code for Reference */}
               <div className="bg-white rounded-2xl p-4">
                 <div className="flex justify-between items-center">
                   <div>
@@ -210,14 +229,10 @@ export function CheckoutSection() {
             </div>
           </Card>
 
-          {/* Action Buttons */}
           <div className="space-y-4">
-            <div className="grid grid-cols-1  gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <Link href="/menu">
-                <Button
-                  variant="outline"
-                  className="w-full bg-primary text-white border-white/30 hover:bg-primary/90 py-3 rounded-full"
-                >
+                <Button className="w-full bg-primary text-white border-white/30 hover:bg-primary/90 py-3 rounded-full">
                   Order More
                 </Button>
               </Link>
@@ -233,7 +248,6 @@ export function CheckoutSection() {
             </Link>
           </div>
 
-          {/* Additional Info */}
           <div className="mt-8 text-center">
             <p className="text-white/60 text-sm leading-relaxed">
               You will receive a notification when your order is ready for
@@ -247,7 +261,7 @@ export function CheckoutSection() {
     );
   }
 
-  // Empty cart state
+  // Empty cart state (unchanged)
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen max-w-[calc(100vw-6rem)] my-8 mx-auto rounded-[40px] bg-secondary p-6 pt-40">
@@ -327,89 +341,129 @@ export function CheckoutSection() {
           </h2>
 
           <div className="space-y-4 mb-6">
-            {cartItems.map((item) => (
-              <div
-                key={`${item.product_id}`}
-                className="bg-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
-              >
-                {/* Product Image */}
-                <div className="relative w-20 h-20 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-100 mx-auto sm:mx-0">
-                  <Image
-                    src="/bg1.png"
-                    alt={item.product_name || "Product"}
-                    fill
-                    className="object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/bg1.png";
-                    }}
-                  />
-                </div>
+            {cartItems.map((item, index) => {
+              const isProduct = item.type === "product";
+              const itemName = isProduct
+                ? item.product_name
+                : item.merchant_name;
+              const itemPrice = isProduct
+                ? item.product_price
+                : item.merchant_price;
+              const itemPhoto = isProduct
+                ? item.product_photo
+                : item.merchant_photo;
+              const itemId = isProduct ? item.product_id : item.merchant_id;
 
-                {/* Product Info + Remove Button */}
-                <div className="flex-1 w-full">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                    <div className="text-center sm:text-left">
-                      <h3 className="font-medium text-gray-900 break-words">
-                        {item.product_name || "Unknown Product"}
-                      </h3>
-                      <p className="text-primary font-semibold mt-1">
-                        {item.product_price || 0} EGP
-                      </p>
-                      {item.product_category && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {item.product_category}
-                        </p>
-                      )}
-                      {item.extras && item.extras.length > 0 && (
-                        <div className="flex flex-wrap justify-center sm:justify-start gap-1 mt-2">
-                          {item.extras.map((extraId, index) => (
-                            <span
-                              key={index}
-                              className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600"
-                            >
-                              Extra #{extraId}
-                            </span>
-                          ))}
-                        </div>
+              return (
+                <div
+                  key={`${item.type}-${itemId}-${index}`}
+                  className="bg-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
+                >
+                  {/* Item Image with Type Badge */}
+                  <div className="relative w-20 h-20 sm:w-16 sm:h-16 rounded-xl  bg-gray-100 mx-auto sm:mx-0">
+                    <Image
+                      src={itemPhoto || "/bg1.png"}
+                      alt={itemName || "Item"}
+                      fill
+                      className="object-cover rounded-xl"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/bg1.png";
+                      }}
+                    />
+                    {/* Type Badge */}
+                    <div className="absolute -top-1 -right-1 bg-primary rounded-full p-1">
+                      {isProduct ? (
+                        <ShoppingBag className="h-3 w-3 text-white" />
+                      ) : (
+                        <Package className="h-3 w-3 text-white" />
                       )}
                     </div>
+                  </div>
 
+                  {/* Item Info */}
+                  <div className="flex-1 w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="text-center sm:text-left">
+                        <h3 className="font-medium text-gray-900 break-words">
+                          {itemName || "Unknown Item"}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          {isProduct ? "Product" : "Merchandise"}
+                        </p>
+                        <p className="text-primary font-semibold mt-1">
+                          {(itemPrice || 0).toFixed(2)} EGP
+                        </p>
+                        {isProduct && item.extras && item.extras.length > 0 && (
+                          <div className="flex flex-wrap justify-center sm:justify-start gap-1 mt-2">
+                            {item.extrasData?.map((extra) => (
+                              <span
+                                key={extra.id}
+                                className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600"
+                              >
+                                {extra.name} (+{extra.price} EGP)
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="self-end sm:self-auto size-8 text-gray-400 hover:text-gray-600"
+                        onClick={() =>
+                          handleRemoveItem(
+                            isProduct
+                              ? { product_id: item.product_id }
+                              : { merchant_id: item.merchant_id }
+                          )
+                        }
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Quantity Controls */}
+                  <div className="flex justify-center sm:justify-end items-center gap-2">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
-                      className="self-end sm:self-auto size-8 text-gray-400 hover:text-gray-600"
-                      onClick={() => handleRemoveItem(item.product_id)}
+                      className="h-8 w-8 rounded-full border-gray-300 bg-transparent hover:bg-gray-50"
+                      onClick={() =>
+                        handleQuantityChange(
+                          isProduct
+                            ? { product_id: item.product_id }
+                            : { merchant_id: item.merchant_id },
+                          -1
+                        )
+                      }
                     >
-                      <Trash className="h-4 w-4" />
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="w-8 text-center font-medium">
+                      {item.quantity}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full border-gray-300 bg-transparent hover:bg-gray-50"
+                      onClick={() =>
+                        handleQuantityChange(
+                          isProduct
+                            ? { product_id: item.product_id }
+                            : { merchant_id: item.merchant_id },
+                          1
+                        )
+                      }
+                    >
+                      <Plus className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
-
-                {/* Quantity Controls */}
-                <div className="flex justify-center sm:justify-end items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-full border-gray-300 bg-transparent hover:bg-gray-50"
-                    onClick={() => handleQuantityChange(item.product_id, -1)}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <span className="w-8 text-center font-medium">
-                    {item.quantity}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-full border-gray-300 bg-transparent hover:bg-gray-50"
-                    onClick={() => handleQuantityChange(item.product_id, 1)}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <Link href="/menu">
@@ -419,7 +473,7 @@ export function CheckoutSection() {
           </Link>
         </Card>
 
-        {/* Payment */}
+        {/* Payment Summary - Same as before */}
         <Card className="p-6 bg-white/10 border-0 rounded-3xl">
           <h2 className="text-lg font-medium text-white mb-4">
             Payment Summary
@@ -462,12 +516,11 @@ export function CheckoutSection() {
           </div>
 
           <p className="text-sm text-white/70 mb-6 leading-relaxed">
-            Your order will be prepared fresh and you'll receive a confirmation
-            with pickup details.
+            Your order will be prepared fresh
           </p>
 
           {/* Points Redemption */}
-          {isAuthenticated && user?.points && user.points > 0 && (
+          {/* {isAuthenticated && user?.points && user.points > 0 && (
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-white font-medium">Redeem Points</span>
@@ -511,7 +564,7 @@ export function CheckoutSection() {
                 </p>
               </div>
             </div>
-          )}
+          )} */}
 
           {pointsDiscount > 0 && (
             <p className="text-center text-green-400 mb-4">

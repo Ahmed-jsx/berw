@@ -19,11 +19,12 @@ export default function AnimatedSlider() {
         {/* Yellow elements moving left */}
         <div className="absolute top-0 w-full h-32 flex items-center overflow-hidden">
           <motion.div
-            className="flex gap-6 min-w-max"
-            animate={{ x: ["0%", "-100%"] }}
+            className="flex gap-6 min-w-max will-change-transform"
+            animate={{ x: ["0%", "-50%"] }}
             transition={{
               duration: 20,
               repeat: Infinity,
+              repeatType: "loop",
               ease: "linear",
             }}
           >
@@ -32,7 +33,7 @@ export default function AnimatedSlider() {
                 {Array.from({ length: 10 }).map((_, j) => (
                   <div
                     key={`${i}-${j}`}
-                    className="w-72 h-16 bg-yellow-400 rounded-2xl shadow-md"
+                    className="w-72 h-16 bg-yellow-400 rounded-2xl shadow-md flex-shrink-0"
                   />
                 ))}
               </Fragment>
@@ -43,12 +44,13 @@ export default function AnimatedSlider() {
         {/* Images moving left infinitely */}
         <div className="overflow-hidden w-full">
           <motion.div
-            className="flex gap-10"
-            animate={{ x: ["0%", "-100%"] }}
+            className="flex gap-10 min-w-max will-change-transform"
+            animate={{ x: ["0%", "-50%"] }}
             transition={{
               duration: 15,
               ease: "linear",
               repeat: Infinity,
+              repeatType: "loop",
             }}
           >
             {Array.from({ length: 2 }).map((_, index) => (
@@ -75,11 +77,12 @@ export default function AnimatedSlider() {
         {/* Teal elements moving right */}
         <div className="absolute bottom-0 w-full h-32 flex items-center overflow-hidden">
           <motion.div
-            className="flex gap-6 min-w-max"
-            animate={{ x: ["-100%", "0%"] }}
+            className="flex gap-6 min-w-max will-change-transform"
+            animate={{ x: ["-50%", "0%"] }}
             transition={{
               duration: 20,
               repeat: Infinity,
+              repeatType: "loop",
               ease: "linear",
             }}
           >
@@ -88,7 +91,7 @@ export default function AnimatedSlider() {
                 {Array.from({ length: 10 }).map((_, j) => (
                   <div
                     key={`${i}-${j}`}
-                    className="w-80 h-20 bg-teal-600 rounded-2xl shadow-md"
+                    className="w-80 h-20 bg-teal-600 rounded-2xl shadow-md flex-shrink-0"
                   />
                 ))}
               </Fragment>

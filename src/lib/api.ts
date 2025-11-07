@@ -42,8 +42,7 @@ export interface CreateProduct {
   category: string;
   price: number;
   product_components: string;
-  product_photo?: string; // Optional — may be URL from backend
-  file?: File; // For uploading a new image
+  product_photo?: File; // File for uploading a new image
   is_featured: boolean;
   has_points: boolean;
 }
@@ -127,12 +126,12 @@ export const api = {
         // formData.append("has_points", body.has_points ? "true" : "false");
 
         // File upload
-        if (body.file) {
-          formData.append("product_photo", body.file);
+        if (body.product_photo) {
+          formData.append("product_photo", body.product_photo);
           console.log("📸 Uploading file:", {
-            name: body.file.name,
-            type: body.file.type,
-            size: body.file.size,
+            name: body.product_photo.name,
+            type: body.product_photo.type,
+            size: body.product_photo.size,
           });
         }
 

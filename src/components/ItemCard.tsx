@@ -24,7 +24,7 @@ const itemVariants = {
   hover: {
     y: "0%",
     opacity: 1,
-    transition: { duration: 0.4, ease: "easeInOut" },
+    transition: { duration: 0.4 },
   },
 };
 
@@ -57,7 +57,7 @@ const ItemCard = ({
   const imageSrc =
     product_photo && product_photo.trim() !== ""
       ? product_photo
-      : "/monkey1.png";
+      : "/bg1.png";
 
   // Disable animation on mobile
   const motionProps = isMobile
@@ -71,7 +71,7 @@ const ItemCard = ({
     >
       {/* ✅ Background Image with fallback */}
       <Image
-        src={"/monkey1.png"}
+        src={imageSrc}
         alt={name || "Product"}
         fill
         className="object-cover rounded-2xl transition-all duration-500 group-hover:scale-105"
@@ -108,7 +108,10 @@ const ItemCard = ({
               <span className="text-white font-bold text-base">
                 {displayPrice}
               </span>
-              <button className="bg-white text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">
+              <button
+                onClick={() => router.push(`/menu/${id}`)}
+                className="bg-white text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
+              >
                 Customize
               </button>
             </div>

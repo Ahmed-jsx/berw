@@ -172,9 +172,9 @@ function SingleProductPage({ params }: PageProps) {
 
   return (
     <>
-      <main className="min-h-screen w-full lg:max-w-[calc(100vw-6rem)] lg:my-8 my-12 px-2 lg:mx-auto lg:rounded-[40px] relative overflow-hidden">
+      <main className="lg:min-h-screen w-full lg:max-w-[calc(100vw-6rem)]   px-2 lg:mx-auto lg:rounded-[40px] relative overflow-hidden">
         {/* Hero Section */}
-        <section className="relative min-h-[70vh] sm:min-h-[75vh] lg:min-h-[80vh] pt-16 sm:pt-20 mt-12 rounded-default overflow-hidden">
+        <section className="relative min-h-[80vh]  sm:min-h-[75vh] lg:min-h-[80vh] pt-16 sm:pt-20  rounded-default overflow-hidden">
           {/* Background */}
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -190,7 +190,7 @@ function SingleProductPage({ params }: PageProps) {
           </div>
 
           {/* Content */}
-          <div className="relative z-10 flex items-center min-h-[65vh] sm:min-h-[70vh] lg:min-h-[75vh] px-4 sm:px-6 md:px-8 lg:px-12">
+          <div className="relative z-10 flex items-center min-h-[75vh] sm:min-h-[70vh] lg:min-h-[75vh] px-4 sm:px-6 md:px-8 lg:px-12">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-center w-full max-w-7xl mx-auto">
               {/* Left - Product image */}
               <div className="flex justify-center order-1 lg:order-1">

@@ -46,7 +46,6 @@ const productSchema = z.object({
   category: z.string().min(1, "Category is required"),
   price: z.string().min(1, "Price is required"),
   product_components: z.string().optional(),
-  product_photo: z.string().min(1, "Product photo is required"),
   is_featured: z.boolean(),
 });
 
@@ -76,7 +75,6 @@ export default function CreateProductPage() {
       category: "",
       price: "",
       product_components: "",
-      product_photo: "",
       is_featured: false,
     },
   });
@@ -95,9 +93,7 @@ export default function CreateProductPage() {
   // -------------------- HANDLE SUBMIT --------------------
   const handleSubmit = (values: ProductFormValues) => {
     if (!uploadedImage) {
-      form.setError("product_photo", {
-        message: "Please upload a product image",
-      });
+      toast.error("Please upload a product image");
       return;
     }
 
@@ -109,7 +105,7 @@ export default function CreateProductPage() {
         price: parseFloat(values.price),
         product_components: values.product_components || "",
         is_featured: values.is_featured,
-        file: uploadedImage,
+        product_photo: uploadedImage,
       },
       {
         onSuccess: () => {
@@ -174,37 +170,26 @@ export default function CreateProductPage() {
                 className="space-y-8"
               >
                 {/* Image Upload */}
-                <FormField
-                  control={form.control}
-                  name="product_photo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-lg font-semibold">
-                        Product Image
-                      </FormLabel>
-                      <FormDescription>
-                        Upload a product image (max 2MB)
-                      </FormDescription>
-                      <FormControl>
-                        <div className="mt-4">
-                          <ImageUpload
-                            maxSize={2 * 1024 * 1024}
-                            onImageChange={(image) => {
-                              if (image && image.status === "completed") {
-                                setUploadedImage(image.file);
-                                field.onChange(image.file.name);
-                              } else {
-                                setUploadedImage(null);
-                                field.onChange("");
-                              }
-                            }}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <label className="text-lg font-semibold">
+                    Product Image
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a product image (max 2MB)
+                  </p>
+                  <div className="mt-4">
+                    <ImageUpload
+                      maxSize={2 * 1024 * 1024}
+                      onImageChange={(image) => {
+                        if (image && image.status === "completed") {
+                          setUploadedImage(image.file);
+                        } else {
+                          setUploadedImage(null);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
 
                 {/* Product Details */}
                 <div className="grid md:grid-cols-2 gap-6">

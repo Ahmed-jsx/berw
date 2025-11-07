@@ -125,21 +125,114 @@ function SingleProductPage({ params }: PageProps) {
     });
   };
 
+  // Loading Skeleton Component
+  const ProductPageSkeleton = () => (
+    <>
+      <main className="lg:min-h-screen w-full lg:max-w-[calc(100vw-6rem)] px-2 lg:mx-auto lg:rounded-[40px] relative overflow-hidden">
+        {/* Hero Section Skeleton */}
+        <section className="relative min-h-[80vh] sm:min-h-[75vh] lg:min-h-[80vh] pt-16 sm:pt-20 rounded-default overflow-hidden">
+          {/* Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse">
+            <div className="absolute inset-0 bg-black/20"></div>
+          </div>
+
+          {/* Content Skeleton */}
+          <div className="relative z-10 flex items-center min-h-[75vh] sm:min-h-[70vh] lg:min-h-[75vh] px-4 sm:px-6 md:px-8 lg:px-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-center w-full max-w-7xl mx-auto">
+              {/* Left - Product image skeleton */}
+              <div className="flex justify-center order-1 lg:order-1">
+                <div className="relative">
+                  <div className="w-56 h-56 xs:w-64 xs:h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-gray-400 rounded-2xl shadow-2xl animate-pulse" />
+                  <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-12 sm:h-12 bg-gray-500 rounded-full animate-pulse" />
+                </div>
+              </div>
+
+              {/* Right - Product info skeleton */}
+              <div className="text-white space-y-4 sm:space-y-5 lg:space-y-6 order-2 lg:order-2">
+                <div className="space-y-3">
+                  {/* Title skeleton */}
+                  <div className="h-8 sm:h-10 md:h-12 bg-white/30 rounded-lg w-3/4 animate-pulse" />
+                  {/* Category badge skeleton */}
+                  <div className="h-8 bg-white/20 rounded-full w-32 animate-pulse" />
+                </div>
+
+                {/* Description skeleton */}
+                <div className="space-y-2">
+                  <div className="h-4 bg-white/20 rounded w-full animate-pulse" />
+                  <div className="h-4 bg-white/20 rounded w-5/6 animate-pulse" />
+                  <div className="h-4 bg-white/20 rounded w-4/6 animate-pulse" />
+                </div>
+
+                {/* Points badge skeleton */}
+                <div className="h-10 bg-white/20 rounded-full w-64 animate-pulse" />
+
+                {/* Quantity and Price skeleton */}
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="h-5 bg-white/20 rounded w-20 animate-pulse" />
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 w-9 sm:h-10 sm:w-10 bg-white/20 rounded-full animate-pulse" />
+                      <div className="h-6 bg-white/20 rounded w-8 animate-pulse" />
+                      <div className="h-9 w-9 sm:h-10 sm:w-10 bg-white/20 rounded-full animate-pulse" />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+                    <div className="h-14 sm:h-16 bg-white/20 rounded-full w-40 sm:w-48 animate-pulse" />
+                    <div className="h-12 sm:h-14 bg-white/30 rounded-full w-full sm:w-40 animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Extras and Notes Skeleton */}
+      <section className="py-6 sm:py-8 lg:py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10">
+          <div className="lg:col-span-8 space-y-5 sm:space-y-6 lg:space-y-8">
+            {/* Title skeleton */}
+            <div className="h-8 sm:h-10 bg-gray-300 rounded-lg w-48 animate-pulse" />
+
+            {/* Extras grid skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card
+                  key={i}
+                  className="p-4 sm:p-5 lg:p-6 bg-gray-100 border border-gray-200 animate-pulse"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1">
+                      <div className="h-5 w-5 bg-gray-300 rounded" />
+                      <div className="h-5 bg-gray-300 rounded w-32" />
+                    </div>
+                    <div className="h-5 bg-gray-300 rounded w-16" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 space-y-4 sm:space-y-5 lg:space-y-6">
+            {/* Notes label skeleton */}
+            <div className="h-6 sm:h-7 bg-gray-300 rounded w-48 animate-pulse" />
+            {/* Notes input skeleton */}
+            <div className="h-12 sm:h-14 bg-gray-200 rounded-full animate-pulse" />
+            {/* Helper text skeleton */}
+            <div className="space-y-1">
+              <div className="h-3 bg-gray-200 rounded w-full animate-pulse" />
+              <div className="h-3 bg-gray-200 rounded w-3/4 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+
   // Loading state
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="text-center">
-          <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-primary mx-auto mb-4" />
-          <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
-            Loading Product
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Please wait...
-          </p>
-        </div>
-      </div>
-    );
+    return <ProductPageSkeleton />;
   }
 
   // Error state

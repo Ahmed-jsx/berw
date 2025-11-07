@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useExtras, type Extra } from "@/hooks/useExtras";
 import { useProduct } from "@/hooks/useProducts";
+import { useAuthStore } from "@/store/auth-store";
 import { useOrderStore } from "@/store/orderStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Minus, Plus, ShoppingCart, Star } from "lucide-react";
@@ -36,6 +37,7 @@ type OrderFormData = z.infer<typeof orderFormSchema>;
 function SingleProductPage({ params }: PageProps) {
   const router = useRouter();
   const { id } = use(params);
+  const { isAuthenticated } = useAuthStore();
 
   const { data: productResponse, isLoading, error } = useProduct(id);
   const { addToCart } = useOrderStore();
@@ -97,7 +99,10 @@ function SingleProductPage({ params }: PageProps) {
   // Handle form submission
   const onSubmit = (data: OrderFormData) => {
     if (!product) return;
-
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to your cart");
+      return;
+    }
     const extrasData: Extra[] = extras.filter((e) =>
       selectedExtras.includes(e.id)
     );
@@ -114,7 +119,7 @@ function SingleProductPage({ params }: PageProps) {
       notes: data.notes,
     };
 
-    addToCart(cartItem, extras);
+    addToCart(cartItem, extrasData as any);
     toast.success(`${product.product_name} added to cart!`, {
       duration: 3000,
     });

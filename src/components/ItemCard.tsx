@@ -12,6 +12,8 @@ interface ItemCardProps {
   price?: number | string | null;
   product_photo?: string | null;
   isFeatured?: boolean;
+  route?: string; // Optional route prefix (default: "/menu")
+  buttonText?: string; // Optional button text (default: "Customize")
 }
 
 const contentVariants = {
@@ -34,6 +36,8 @@ const ItemCard = ({
   description,
   price = 0,
   product_photo,
+  route = "/menu",
+  buttonText = "Customize",
 }: ItemCardProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const controls = useAnimation();
@@ -64,9 +68,14 @@ const ItemCard = ({
     ? {}
     : { initial: "rest", whileHover: "hover", animate: "rest" };
 
+  const handleCardClick = () => {
+    router.push(`${route}/${id}`);
+  };
+
   return (
     <motion.div
       {...motionProps}
+      onClick={handleCardClick}
       className="relative group rounded-2xl h-[350px] w-full max-w-[400px] overflow-hidden cursor-pointer shadow-md"
     >
       {/* ✅ Background Image with fallback */}
@@ -109,10 +118,13 @@ const ItemCard = ({
                 {displayPrice}
               </span>
               <button
-                onClick={() => router.push(`/menu/${id}`)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`${route}/${id}`);
+                }}
                 className="bg-white text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
               >
-                Customize
+                {buttonText}
               </button>
             </div>
           </div>
@@ -143,10 +155,13 @@ const ItemCard = ({
 
             <motion.button
               variants={itemVariants}
-              onClick={() => router.push(`/menu/${id}`)}
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`${route}/${id}`);
+              }}
               className="w-full bg-white text-black py-2 mt-2 rounded-md font-medium text-sm hover:bg-gray-200 transition-colors"
             >
-              Customize
+              {buttonText}
             </motion.button>
           </motion.div>
         )}

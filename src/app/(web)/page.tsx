@@ -6,6 +6,7 @@ import ContactForm from "@/components/sections/home/ContactForm";
 import Cta from "@/components/sections/home/Cta";
 import { ExploreCoffee } from "@/components/sections/home/ExploreCoffee";
 import FeaturedItems from "@/components/sections/home/FeaturedItems";
+import FeaturedMerch from "@/components/sections/home/FeaturedMerch";
 import Hero from "@/components/sections/home/Hero";
 import ProductList from "@/components/sections/home/ProductList";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ const Home = () => {
         <SectionHeader title="Explore the Coffee World" />
         <ExploreCoffee />
       </section>
+      <FeaturedMerch />
       <Cta />
       <AnimatedSlider />
       <div className=" max-w-[1220px] px-8 lg:px-0 py-24 mx-auto">

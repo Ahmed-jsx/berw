@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useOrderStore } from "@/store/orderStore";
 import { toast } from "sonner";
-import { useRelatedMerch } from "@/hooks/useRelatedMerch";
-import { useMerch, useOneMerch } from "@/hooks/useMerch";
+import { useMerchants, useOneMerch } from "@/hooks/useMerch";
 
 export default function SingleMerchPage() {
   const router = useRouter();
@@ -18,19 +17,22 @@ export default function SingleMerchPage() {
   const [quantity, setQuantity] = useState(1);
 
   // ✅ ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
-  const { one } = useMerch();
   const { data: merch, isLoading, error } = useOneMerch(Number(params.id));
-
-  // ✅ Fetch related merch based on category
-  const { data: related = [], isLoading: loadingRelated } = useRelatedMerch(
-    merch?.category
-  );
+  const { data: allMerchants = [], isLoading: loadingMerchants } = useMerchants();
 
   // ✅ Move useMemo here - BEFORE conditional returns
   const totalPrice = useMemo(() => {
     const base = parseFloat(merch?.merchant_price || "0");
     return (base * quantity).toFixed(2);
   }, [merch, quantity]);
+
+  // Filter out current merchant and limit to 4
+  const otherMerchants = useMemo(() => {
+    if (!merch) return [];
+    return allMerchants
+      .filter((item) => item.merchant_id !== merch.merchant_id)
+      .slice(0, 4);
+  }, [allMerchants, merch]);
 
   // ✅ Now it's safe to have conditional returns
   const handleQuantityChange = (change: number) => {
@@ -45,7 +47,7 @@ export default function SingleMerchPage() {
       merchant_id: merch.merchant_id,
       merchant_name: merch.merchant_name,
       merchant_price: parseFloat(merch.merchant_price), // Parse string to number
-      merchant_photo: merch.merchant_photo || merch.image || "/monkey1.png",
+      merchant_photo: merch.merchant_photo || "/monkey1.png",
       quantity,
     });
 
@@ -69,25 +71,25 @@ export default function SingleMerchPage() {
     );
 
   return (
-    <main className="min-h-screen w-full lg:max-w-[calc(100vw-6rem)] lg:my-8 my-12 px-2 lg:mx-auto lg:rounded-[40px] relative overflow-hidden">
+    <main className="min-h-screen w-full lg:max-w-[calc(100vw-6rem)]   px-2 lg:mx-auto lg:rounded-[40px] relative overflow-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] mt-12 rounded-default overflow-hidden">
+      <section className="relative min-h-[80vh] sm:min-h-[75vh] lg:min-h-[80vh] pt-16 sm:pt-20  rounded-default overflow-hidden">
         {/* Background */}
         <div
           className="absolute inset-0 bg-cover bg-center blur-sm"
           style={{
-            backgroundImage: `url(${"/monkey1.png"})`,
+            backgroundImage: `url(${merch.merchant_photo || "/monkey1.png"})`,
           }}
         >
           <div className="absolute inset-0 bg-black/50" />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 items-center gap-8 px-4 md:px-8 lg:px-12 min-h-[70vh]">
+        <div className="relative z-10 grid lg:my-12 my-8 grid-cols-1 lg:grid-cols-2 items-center gap-8 px-4 md:px-8 lg:px-12 min-h-[70vh]">
           {/* Left - Image */}
           <div className="flex justify-center">
             <Image
-              src={"/monkey1.png"}
+              src={merch.merchant_photo || "/monkey1.png"}
               alt={merch.merchant_name}
               width={500}
               height={500}
@@ -146,63 +148,68 @@ export default function SingleMerchPage() {
         </div>
       </section>
 
-      {/* Related Merch Section */}
+      {/* Other Merch Section */}
       <section className="py-12 px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto">
         <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-8">
           You may also like
         </h2>
 
-        {loadingRelated ? (
+        {loadingMerchants ? (
           <div className="flex justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : related.length > 0 ? (
+        ) : otherMerchants.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {related
-              .filter((item) => item.merchant_id !== merch.merchant_id)
-              .slice(0, 4)
-              .map((item) => (
-                <motion.div
-                  key={item.merchant_id}
-                  whileHover={{ scale: 1.03 }}
-                  className="bg-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
-                >
-                  <div className="relative h-48">
-                    <Image
-                      src={item.image || "/fallback.png"}
-                      alt={item.merchant_name}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/20" />
-                  </div>
-                  <div className="p-4 space-y-2">
-                    <h3 className="font-semibold text-lg line-clamp-1">
-                      {item.merchant_name}
-                    </h3>
+            {otherMerchants.map((item) => (
+              <motion.div
+                key={item.merchant_id}
+                whileHover={{ scale: 1.03 }}
+                className="bg-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
+                onClick={() => router.push(`/merch/${item.merchant_id}`)}
+              >
+                <div className="relative w-full h-[350px]">
+                  <Image
+                    src={item.merchant_photo || "/monkey1.png"}
+                    alt={item.merchant_name}
+                    fill
+                    className="object-cover "
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = "/monkey1.png";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/20" />
+                </div>
+                <div className="p-4 space-y-2">
+                  <h3 className="font-semibold text-lg line-clamp-1">
+                    {item.merchant_name}
+                  </h3>
+                  {item.merchant_description && (
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {item.merchant_description}
                     </p>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="font-bold text-primary">
-                        {item.merchant_price} EGP
-                      </span>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          router.push(`/merch/${item.merchant_id}`)
-                        }
-                      >
-                        View
-                      </Button>
-                    </div>
+                  )}
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="font-bold text-primary">
+                      {parseFloat(item.merchant_price).toFixed(2)} EGP
+                    </span>
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/merch/${item.merchant_id}`);
+                      }}
+                    >
+                      View
+                    </Button>
                   </div>
-                </motion.div>
-              ))}
+                </div>
+              </motion.div>
+            ))}
           </div>
         ) : (
           <p className="text-muted-foreground text-center">
-            No related merch found.
+            No other merchandise available.
           </p>
         )}
       </section>

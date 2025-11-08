@@ -2,6 +2,7 @@
 import {
   IconDashboard,
   IconInnerShadowTop,
+  IconShoppingCart,
   IconListDetails,
   IconUsers,
 } from "@tabler/icons-react";
@@ -41,6 +42,11 @@ const data = {
       title: "Products",
       url: "/dashboard/products", // Fixed: Added leading slash
       icon: IconListDetails,
+    },
+    {
+      title: "Merch",
+      url: "/dashboard/merch", // Fixed: Added leading slash
+      icon: IconShoppingCart,
     },
     {
       title: "Users",

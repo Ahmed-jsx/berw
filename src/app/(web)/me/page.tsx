@@ -2,7 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -18,36 +17,22 @@ import {
   Award,
   Calendar,
   DollarSign,
-  Home,
-  LogOut,
   Mail,
   Package,
   ShoppingBag,
   TrendingUp,
 } from "lucide-react";
-import Link from "next/link";
-import { redirect, useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Me() {
-  const { user, clearAuth, isAuthenticated } = useAuthStore();
-  const { data } = useUserById(user?.id as number);
-  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const { data, isLoading } = useUserById(user?.id as number);
   const details = data?.user;
   const recentOrders = data?.recent_orders || [];
 
-  const handleLogout = () => {
-    clearAuth();
-    router.push("/login");
-  };
   if (!isAuthenticated) {
     redirect("/login");
-  }
-  if (!details) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center text-muted-foreground">
-        Loading user details...
-      </div>
-    );
   }
 
   const getStatusVariant = (status: string) => {
@@ -63,37 +48,87 @@ export default function Me() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-muted/30 p-6">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
-            <p className="text-muted-foreground">
-              Welcome back, {details.user_name}
-            </p>
-          </div>
-          <div className="flex justify-between items-center gap-4">
-            <Link href="/">
-              <Button>
-                <Home className="mr-2 h-4 w-4" />
-                Home
-              </Button>
-            </Link>
-            <Button variant="destructive" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
+  // Loading state
+  if (isLoading || !details) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Hero Section Skeleton */}
+        <div className="bg-secondary text-white py-24  px-4">
+          <div className="max-w-7xl mx-auto">
+            <Skeleton className="h-12 w-64 mx-auto mb-4 bg-white/20" />
+            <Skeleton className="h-6 w-96 mx-auto bg-white/20" />
           </div>
         </div>
 
-        {/* Main Grid Layout */}
+        {/* Content Skeleton */}
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
+          <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center">
+                    <Skeleton className="h-24 w-24 rounded-full mb-4" />
+                    <Skeleton className="h-6 w-32 mb-2" />
+                    <Skeleton className="h-4 w-48 mb-2" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-5 w-32" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardContent className="pt-6">
+                      <Skeleton className="h-20 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-64 w-full" />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="bg-secondary text-white py-24  text-center px-4">
+        <div className="max-w-7xl my-12 mx-auto">
+          <h1 className="text-4xl md:text-6xl font-bold mb-3">My Profile</h1>
+          <p className="text-white/80 max-w-2xl mx-auto text-sm md:text-lg">
+            Welcome back, {details.user_name}
+          </p>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
         <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
           {/* Left Sidebar - User Details */}
           <div className="space-y-6">
             {/* Profile Card */}
-            <Card>
+            <Card className="rounded-2xl shadow-lg border-0">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
@@ -118,7 +153,7 @@ export default function Me() {
             </Card>
 
             {/* Stats Card */}
-            <Card>
+            <Card className="rounded-2xl shadow-lg border-0">
               <CardHeader>
                 <CardTitle className="text-base">Account Stats</CardTitle>
               </CardHeader>
@@ -186,7 +221,7 @@ export default function Me() {
           <div className="space-y-6">
             {/* Quick Stats */}
             <div className="grid gap-4 md:grid-cols-3">
-              <Card>
+              <Card className="rounded-2xl shadow-lg border-0">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -204,7 +239,7 @@ export default function Me() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="rounded-2xl shadow-lg border-0">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -222,7 +257,7 @@ export default function Me() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="rounded-2xl shadow-lg border-0">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -242,7 +277,7 @@ export default function Me() {
             </div>
 
             {/* Recent Orders Table */}
-            <Card>
+            <Card className="rounded-2xl shadow-lg border-0">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ShoppingBag className="h-5 w-5" />
@@ -314,3 +349,4 @@ export default function Me() {
     </div>
   );
 }
+

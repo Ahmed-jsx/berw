@@ -6,7 +6,7 @@ const MerchCard = ({ merch }: { merch: any }) => {
     <div className="flex flex-col">
       <div className="w-[200px] rounded-default h-[200px] relative">
         <Image
-          src={"/bg1.png"}
+          src={merch.merchant_photo || "/monkey1.png"}
           alt="merch image"
           fill
           className="object-cover rounded-xl"

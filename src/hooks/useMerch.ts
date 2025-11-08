@@ -1,106 +1,29 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { api, Merchant } from "@/lib/api";
 
-export interface Merchant {
-  merchant_id: number;
-  merchant_name: string;
-  merchant_description: string | null;
-  merchant_price: number;
-  created_at: string;
-  updated_at: string;
-}
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// Re-export Merchant type for convenience
+export type { Merchant } from "@/lib/api";
 
 // --------------------
-// API HELPERS
+// HOOK: useMerchants (uses API from lib/api.ts)
 // --------------------
-const merchAPI = {
-  getAll: async (): Promise<Merchant[]> => {
-    const res = await fetch(`${API_URL}/merchants`, { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to fetch merchants");
-    const data = await res.json();
-    return data.merchants;
-  },
-
-  getById: async (id: number): Promise<Merchant> => {
-    const res = await fetch(`${API_URL}/merchants/${id}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch merchant with id ${id}`);
-    const data = await res.json();
-    return data.merchant;
-  },
-
-  update: async ({
-    id,
-    body,
-  }: {
-    id: number;
-    body: Partial<Merchant>;
-  }): Promise<Merchant> => {
-    const res = await fetch(`${API_URL}/merchants/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`Failed to update merchant ${id}`);
-    const data = await res.json();
-    return data.merchant;
-  },
-
-  delete: async (id: number): Promise<Merchant> => {
-    const res = await fetch(`${API_URL}/merchants/${id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error(`Failed to delete merchant ${id}`);
-    const data = await res.json();
-    return data.deleted;
-  },
-};
-
-// --------------------
-// HOOK: useMerch
-// --------------------
-export const useMerch = () => {
-  const queryClient = useQueryClient();
-
-  // 🔹 GET ALL MERCHANTS
-  const all = useQuery({
+export const useMerchants = () =>
+  useQuery<Merchant[], Error>({
     queryKey: ["merchants"],
-    queryFn: merchAPI.getAll,
+    queryFn: api.merchants.getAll,
   });
 
-  // 🔹 GET ONE MERCHANT
-  const one = (id: number) =>
-    useQuery({
-      queryKey: ["merchants", id],
-      queryFn: () => merchAPI.getById(id),
-      enabled: !!id,
-    });
-
-  // 🔹 UPDATE MERCHANT
-  const update = useMutation({
-    mutationFn: merchAPI.update,
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ["merchants"] });
-      queryClient.invalidateQueries({ queryKey: ["merchants", id] });
-    },
-  });
-
-  // 🔹 DELETE MERCHANT
-  const remove = useMutation({
-    mutationFn: merchAPI.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["merchants"] });
-    },
-  });
-
-  return { all, one, update, remove };
-};
-export const useOneMerch = (id: number) => {
-  return useQuery({
+export const useMerchant = (id: number) =>
+  useQuery<Merchant, Error>({
     queryKey: ["merchants", id],
-    queryFn: () => merchAPI.getById(id),
+    queryFn: () => api.merchants.getById(id),
     enabled: !!id,
   });
+
+// Legacy exports for backward compatibility
+export const useMerch = () => {
+  const all = useMerchants();
+  return { all };
 };
+
+export const useOneMerch = useMerchant;

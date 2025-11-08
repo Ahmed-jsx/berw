@@ -26,6 +26,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import MerchCard from "./MerchCard";
 
 const MerchPage = () => {
   const { all } = useMerch();
@@ -258,17 +259,9 @@ const MerchPage = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredMerch.map((item) => (
-                <div key={item.merchant_id}>
-                  <Link href={`/merch/${item.merchant_id}`}>
-                    <ItemCard
-                      id={item.merchant_id}
-                      name={item.merchant_name}
-                      description={item.merchant_description || ""}
-                      price={item.merchant_price}
-                      product_photo={"/monkey1.png"} // you can later attach real merch image
-                    />
-                  </Link>
-                </div>
+                <Link key={item.merchant_id} href={`/merch/${item.merchant_id}`}>
+                  <MerchCard merch={item} />
+                </Link>
               ))}
             </div>
           )}

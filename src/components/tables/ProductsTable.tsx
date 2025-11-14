@@ -169,7 +169,7 @@ const columns: ColumnDef<Product>[] = [
         <div className="flex items-center gap-3">
           {product_photo ? (
             <Image
-              src={"/monkey1.png"}
+              src={product_photo}
               alt={product_name}
               width={40}
               height={40}

@@ -195,12 +195,12 @@ export default function EditProductPage() {
 
         <Card className="shadow-lg border-0">
           <CardContent className="p-6 md:p-8">
-            {/* Product Image Preview */}
+            {/* Product Image Preview - Fixed: Use regular label instead of FormLabel */}
             {product.product_photo && (
               <div className="mb-6">
-                <FormLabel className="text-lg font-semibold mb-2 block">
+                <label className="text-lg font-semibold mb-2 block">
                   Current Product Image
-                </FormLabel>
+                </label>
                 <div className="relative w-full h-48 rounded-lg overflow-hidden border">
                   <Image
                     src={product.product_photo}

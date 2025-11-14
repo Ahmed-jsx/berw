@@ -81,20 +81,8 @@ export function DataTable<TData extends RowData>({
 
     return [
       { label: "All Orders", value: "all", count: data.length },
-      {
-        label: "Pending",
-        value: "pending",
-        count: data.filter(
-          (d: any) => d[statusKey]?.toLowerCase() === "pending"
-        ).length,
-      },
-      {
-        label: "Processing",
-        value: "processing",
-        count: data.filter(
-          (d: any) => d[statusKey]?.toLowerCase() === "processing"
-        ).length,
-      },
+
+
       {
         label: "Completed",
         value: "completed",

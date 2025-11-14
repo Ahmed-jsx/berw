@@ -142,9 +142,7 @@ export function ExploreCoffee() {
   return (
     <main className="w-full bg-white">
       <section className="mx-auto max-w-6xl px-6 lg:py-10">
-        <h2 className="text-center text-sm font-semibold tracking-wide text-teal-700">
-          Explore the Coffee World
-        </h2>
+
 
         {/* ✅ Category badges */}
         <div className="mt-6 flex flex-wrap gap-3 justify-center">

@@ -115,7 +115,10 @@ export const useAdminOrders = (
   return useQuery({
     queryKey: orderKeys.admin.all(),
     queryFn: orderApi.getAllOrdersAdmin,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 30, // 30 seconds - shorter stale time for more frequent updates
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnMount: true, // Refetch when component mounts
+    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes for real-time updates
     ...options,
   });
 };
@@ -129,7 +132,9 @@ export const useAdminOrderDetails = (
     queryKey: orderKeys.admin.details(orderId),
     queryFn: () => orderApi.getOrderDetailsByIdAdmin(orderId),
     enabled: !!orderId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 30, // 30 seconds - shorter stale time for more frequent updates
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnMount: true, // Refetch when component mounts
     ...options,
   });
 };
@@ -203,18 +208,18 @@ export const useOrderManagement = () => {
 
   const ordersQuery = useAdminOrders({
     enabled: !isSearching, // ✅ only fetch all when not searching
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
+    refetchOnWindowFocus: true, // Enable refetch on window focus
+    refetchOnMount: true, // Enable refetch on mount
+    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes for real-time updates
   });
 
   const searchQuery = useSearchOrders(
     { code: orderFilters.searchTerm },
     {
       enabled: isSearching, // ✅ only fetch search results when searching
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchInterval: false,
+      refetchOnWindowFocus: true, // Enable refetch on window focus
+      refetchOnMount: true, // Enable refetch on mount
+      refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
     }
   );
 

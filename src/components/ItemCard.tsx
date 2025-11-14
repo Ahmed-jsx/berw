@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 interface ItemCardProps {
   id: number;
   name: string;
-  description: string | null;
+  description?: string | null;
   price?: number | string | null;
   product_photo?: string | null;
   isFeatured?: boolean;

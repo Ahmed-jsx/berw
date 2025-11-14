@@ -213,7 +213,7 @@ export default function CartButton() {
                 </span>
               </div>
             </div>
-            <Link href={"/check-out"}>
+            <Link onClick={() => setOpen(false)} href={"/check-out"}>
               <Button className="w-full rounded-2xl text-lg py-6 backdrop-blur-md bg-primary/90 hover:bg-primary shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02]">
                 Proceed to Checkout
               </Button>

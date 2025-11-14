@@ -334,12 +334,29 @@ export const orderColumns: ColumnDef<any>[] = [
     header: "Total",
     enableSorting: true,
     cell: (info) => {
+      const order = info.row.original;
       const price =
         typeof info.getValue() === "string"
           ? parseFloat(info.getValue() as string)
           : (info.getValue() as number);
+      
+      // Show discount badge if discount is applied
+      const hasDiscount = (order as any).discount_type && (order as any).discount_value;
+      
       return (
-        <span className="font-semibold text-gray-900">${price.toFixed(2)}</span>
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-gray-900">${price.toFixed(2)}</span>
+          {hasDiscount && (
+            <Badge 
+              variant="outline" 
+              className="text-xs w-fit bg-green-50 text-green-700 border-green-200"
+            >
+              {(order as any).discount_type === "percentage" 
+                ? `${(order as any).discount_value}% off`
+                : `$${(order as any).discount_value} off`}
+            </Badge>
+          )}
+        </div>
       );
     },
   },

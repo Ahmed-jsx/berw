@@ -75,7 +75,12 @@ export const api = {
   products: {
     // Get all products
     getAll: async (): Promise<Product[]> => {
-      const res = await fetch(`${API_URL}/products`, { cache: "default" });
+      const res = await fetch(`${API_URL}/products`, {
+        cache: "default", // Use browser HTTP cache
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       if (!res.ok) throw new Error("Failed to fetch products");
 
       const data = await res.json();

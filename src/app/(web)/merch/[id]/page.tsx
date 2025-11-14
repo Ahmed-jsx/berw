@@ -9,12 +9,14 @@ import { Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useOrderStore } from "@/store/orderStore";
 import { toast } from "sonner";
 import { useMerchants, useOneMerch } from "@/hooks/useMerch";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function SingleMerchPage() {
   const router = useRouter();
   const params = useParams();
   const { addToCart } = useOrderStore();
   const [quantity, setQuantity] = useState(1);
+  const { isAuthenticated } = useAuthStore();
 
   // ✅ ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const { data: merch, isLoading, error } = useOneMerch(Number(params.id));
@@ -40,6 +42,10 @@ export default function SingleMerchPage() {
   };
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to your cart");
+      return;
+    }
     if (!merch) return;
 
     addToCart({
@@ -73,7 +79,7 @@ export default function SingleMerchPage() {
   return (
     <main className="min-h-screen w-full lg:max-w-[calc(100vw-6rem)]   px-2 lg:mx-auto lg:rounded-[40px] relative overflow-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-[80vh] sm:min-h-[75vh] lg:min-h-[80vh] pt-16 sm:pt-20  rounded-default overflow-hidden">
+      <section className="relative min-h-[80vh] mt-12 lg:mt-0 sm:min-h-[75vh] lg:min-h-[80vh] pt-16 sm:pt-20  rounded-default overflow-hidden">
         {/* Background */}
         <div
           className="absolute inset-0 bg-cover bg-center blur-sm"
@@ -85,7 +91,7 @@ export default function SingleMerchPage() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 grid lg:my-12 my-8 grid-cols-1 lg:grid-cols-2 items-center gap-8 px-4 md:px-8 lg:px-12 min-h-[70vh]">
+        <div className="relative z-10 grid lg:my-12  my-12 grid-cols-1 lg:grid-cols-2 items-center gap-8 px-4 md:px-8 lg:px-12 min-h-[70vh]">
           {/* Left - Image */}
           <div className="flex justify-center">
             <Image
@@ -93,7 +99,7 @@ export default function SingleMerchPage() {
               alt={merch.merchant_name}
               width={500}
               height={500}
-              className="object-cover w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-2xl shadow-2xl"
+              className="object-cover w-72 h-72 mt-12 lg:mt-0 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-2xl shadow-2xl"
             />
           </div>
 
@@ -159,7 +165,7 @@ export default function SingleMerchPage() {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : otherMerchants.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {otherMerchants.map((item) => (
               <motion.div
                 key={item.merchant_id}
@@ -167,7 +173,7 @@ export default function SingleMerchPage() {
                 className="bg-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
                 onClick={() => router.push(`/merch/${item.merchant_id}`)}
               >
-                <div className="relative w-full h-[350px]">
+                <div className="relative w-full lg:h-[350px] h-[250px]">
                   <Image
                     src={item.merchant_photo || "/monkey1.png"}
                     alt={item.merchant_name}

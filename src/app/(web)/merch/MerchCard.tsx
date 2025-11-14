@@ -4,7 +4,7 @@ import React from "react";
 const MerchCard = ({ merch }: { merch: any }) => {
   return (
     <div className="flex flex-col">
-      <div className="w-[200px] rounded-default h-[200px] relative">
+      <div className="w-[300px] rounded-default h-[200px] md:h-[300px] relative">
         <Image
           src={merch.merchant_photo || "/monkey1.png"}
           alt="merch image"

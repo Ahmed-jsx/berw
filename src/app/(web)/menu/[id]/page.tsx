@@ -121,7 +121,7 @@ function SingleProductPage({ params }: PageProps) {
 
     addToCart(cartItem, extrasData as any);
     toast.success(`${product.product_name} added to cart!`, {
-      duration: 3000,
+      duration: 1000,
     });
   };
 
@@ -270,14 +270,14 @@ function SingleProductPage({ params }: PageProps) {
 
   return (
     <>
-      <main className="lg:min-h-screen w-full lg:max-w-[calc(100vw-6rem)]   px-2 lg:mx-auto lg:rounded-[40px] relative overflow-hidden">
+      <main className="lg:min-h-screen w-full lg:max-w-[calc(100vw-6rem)] py-8  px-2 lg:mx-auto lg:rounded-[40px] relative overflow-hidden">
         {/* Hero Section */}
-        <section className="relative min-h-[80vh]  sm:min-h-[75vh] lg:min-h-[80vh] pt-16 sm:pt-20  rounded-default overflow-hidden">
+        <section className="relative min-h-[80vh] lg  sm:min-h-[75vh] lg:min-h-[80vh] pt-16 sm:pt-20  rounded-default overflow-hidden">
           {/* Background */}
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `url("/bg1.png")`,
+              backgroundImage: product.product_photo ? `url(${product.product_photo})` : "/bg1.png",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
@@ -296,12 +296,12 @@ function SingleProductPage({ params }: PageProps) {
                   <Image
                     width={500}
                     height={500}
-                    src={"/bg1.png"}
+                    src={product.product_photo || "/bg1.png"}
                     alt={product.product_name}
                     className="w-56 h-56 xs:w-64 xs:h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 object-cover rounded-2xl shadow-2xl"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = "/bg1.png";
+                      target.src = product.product_photo || "/bg1.png";
                     }}
                   />
                   {product.is_featured && (
@@ -392,13 +392,13 @@ function SingleProductPage({ params }: PageProps) {
       </main>
 
       {/* Extras and Notes */}
-      <section className="py-6 sm:py-8 lg:py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10">
-          <div className="lg:col-span-8 space-y-5 sm:space-y-6 lg:space-y-8">
+      <section className="py-6 sm:py-8 lg:py-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12   gap-6 sm:gap-8 lg:gap-10">
+          <div className="lg:col-span-8 w-full space-y-5 sm:space-y-6 lg:space-y-8">
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
               Any extras?
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 w-full gap-4 sm:gap-5 lg:gap-6">
               {extras.map((extra) => (
                 <Card
                   key={extra.id}
@@ -448,24 +448,7 @@ function SingleProductPage({ params }: PageProps) {
             )}
           </div>
 
-          <div className="lg:col-span-4 space-y-4 sm:space-y-5 lg:space-y-6">
-            <Label
-              className="text-lg sm:text-xl md:text-2xl font-medium text-foreground block"
-              htmlFor="notes"
-            >
-              Add Special Note (Optional)
-            </Label>
-            <Input
-              {...register("notes")}
-              type="text"
-              id="notes"
-              className="rounded-full p-3 sm:p-4 placeholder:text-muted-foreground bg-background border-input w-full text-sm sm:text-base"
-              placeholder="Add your note here..."
-            />
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Let us know about any dietary restrictions or special preferences.
-            </p>
-          </div>
+       
         </div>
       </section>
     </>

@@ -41,6 +41,8 @@ export interface Order {
   items: OrderItem[];
   items_subtotal?: number;
   extras_subtotal?: number;
+  discount_type?: 'percentage' | 'amount';
+  discount_value?: number;
 }
 
 export interface CheckoutRequest {

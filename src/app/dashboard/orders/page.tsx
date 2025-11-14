@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { DataTable } from "./data-table";
-import { orderColumns } from "./columns";
-import { useOrderManagement } from "@/hooks/useOrderQueries";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useOrderManagement } from "@/hooks/useOrderQueries";
 import { useOrderStore } from "@/store/orderStore";
+import { useEffect, useMemo, useState } from "react";
+import { orderColumns } from "./columns";
+import { DataTable } from "./data-table";
+import { toast } from "sonner";
 
 export default function OrdersPage() {
   const { setOrderFilters } = useOrderStore();
@@ -57,13 +57,13 @@ export default function OrdersPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Orders</h1>
         <div className="flex space-x-2">
-          <Input
-            className="w-96"
-            placeholder="Search by code, user, or phone"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button disabled={isLoading} className="ml-2 py-2" onClick={refetch}>
+          
+          <Button disabled={isLoading} className="ml-2 py-2" onClick={
+            () => {
+              refetch();
+              toast.success("Orders refreshed successfully");
+            }
+          }>
             Refresh
           </Button>
         </div>

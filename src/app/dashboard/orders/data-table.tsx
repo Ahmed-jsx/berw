@@ -19,8 +19,11 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ArrowUpDown,
+  Search,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // Enhanced Data Table Component
 interface DataTableProps<TData extends RowData> {
@@ -45,15 +48,41 @@ export function DataTable<TData extends RowData>({
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Filter data based on status tab
+  // Filter data based on status tab and search query
   const filteredData = useMemo(() => {
-    if (!enableStatusFilter || statusFilter === "all") return data;
-    return data.filter(
-      (item: any) =>
-        item[statusKey]?.toLowerCase() === statusFilter.toLowerCase()
-    );
-  }, [data, statusFilter, enableStatusFilter, statusKey]);
+    let result = data;
+
+    // Apply status filter
+    if (enableStatusFilter && statusFilter !== "all") {
+      result = result.filter(
+        (item: any) =>
+          item[statusKey]?.toLowerCase() === statusFilter.toLowerCase()
+      );
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter((item: any) => {
+        // Search in multiple fields: code, phone, name, email
+        const code = item.order_code?.toLowerCase() || "";
+        const phone = item.user_number?.toLowerCase() || item.phone?.toLowerCase() || "";
+        const name = item.user_name?.toLowerCase() || item.name?.toLowerCase() || "";
+        const email = item.user_email?.toLowerCase() || item.email?.toLowerCase() || "";
+
+        return (
+          code.includes(query) ||
+          phone.includes(query) ||
+          name.includes(query) ||
+          email.includes(query)
+        );
+      });
+    }
+
+    return result;
+  }, [data, statusFilter, enableStatusFilter, statusKey, searchQuery]);
 
   const table = useReactTable({
     data: filteredData,
@@ -103,6 +132,32 @@ export function DataTable<TData extends RowData>({
 
   return (
     <div className="space-y-4">
+      {/* Search Bar */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by code, phone, name, or email..."
+            className="pl-9 pr-9"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <span className="text-sm text-muted-foreground">
+            {filteredData.length} result{filteredData.length !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
+
       {/* Status Filter Tabs - Only show if enabled */}
       {enableStatusFilter && statusTabs.length > 0 && (
         <div className="flex space-x-2 border-b pb-2 overflow-x-auto">

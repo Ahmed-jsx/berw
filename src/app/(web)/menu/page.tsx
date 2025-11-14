@@ -13,7 +13,6 @@ import {
   UtensilsCrossed,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,18 +27,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ItemCard from "@/components/ItemCard";
 import MenuCard from "@/components/MenuCard";
 import { useProducts } from "@/hooks/useProducts";
-import { useExtras } from "@/hooks/useExtras";
-import { useAuthStore } from "@/store/auth-store";
-import { useOrderStore } from "@/store/orderStore";
-import { Extra } from "@/types/extras";
-import { Product } from "@/types/Product";
 
 const MenuPage = () => {
   const { data: products, isLoading, error } = useProducts();
-  const { data: extras = [] } = useExtras();
-  const { addToCart } = useOrderStore();
-  const { isAuthenticated } = useAuthStore();
-  const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -94,27 +84,7 @@ const MenuPage = () => {
     return list;
   }, [products, searchQuery, selectedCategory, sortBy]);
 
-  const handleAddToCart = (product: Product) => {
-    if (!isAuthenticated) {
-      toast.error("Please login to add items");
-      router.push("/login");
-      return;
-    }
-
-    addToCart(
-      {
-        product_id: product.product_id,
-        product_name: product.product_name,
-        product_price: parseFloat(product.product_price),
-        product_photo: product.product_photo,
-        product_category: product.product_category,
-        quantity: 1,
-        extras: [],
-      },
-      extras as Extra[]
-    );
-    toast.success(`${product.product_name} added to cart!`);
-  };
+ 
 
   // ✅ Skeleton Loading
   if (isLoading) {

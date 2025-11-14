@@ -3,14 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useExtras, type Extra } from "@/hooks/useExtras";
 import { useProduct } from "@/hooks/useProducts";
 import { useAuthStore } from "@/store/auth-store";
 import { useOrderStore } from "@/store/orderStore";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Minus, Plus, ShoppingCart, Star } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,9 +19,9 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // Form schema
@@ -39,7 +38,7 @@ function SingleProductPage({ params }: PageProps) {
   const { id } = use(params);
   const { isAuthenticated } = useAuthStore();
 
-  const { data: productResponse, isLoading, error } = useProduct(id);
+  const { data: productResponse, isLoading, error } = useProduct(Number(id));
   const { addToCart } = useOrderStore();
   const { data: extras = [], isLoading: loadingExtras } = useExtras();
 

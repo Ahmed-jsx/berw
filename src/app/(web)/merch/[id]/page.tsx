@@ -104,7 +104,7 @@ export default function SingleMerchPage() {
           </div>
 
           {/* Right - Info */}
-          <div className="text-white space-y-5">
+          <div className="text-white text-center sm:text-left space-y-5">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
               {merch.merchant_name}
             </h1>

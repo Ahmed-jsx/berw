@@ -63,19 +63,19 @@ const ContactForm = () => {
         name={name}
         render={({ field }) => (
           <FormItem className="space-y-2 w-full">
-            <FormLabel className="text-gray-800 font-semibold text-sm sm:text-base">
+            <FormLabel className="text-secondary font-semibold text-sm sm:text-base">
               {label}
             </FormLabel>
             <FormControl>
               {type === "input" ? (
                 <Input
-                  className="w-full rounded-full border-0 bg-white/90 px-4 py-3 h-12 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-teal-500"
+                  className="w-full rounded-default border-0 bg-white/90 px-4 py-3 h-12 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-teal-500"
                   placeholder={placeholder}
                   {...field}
                 />
               ) : (
                 <Textarea
-                  className="w-full resize-none rounded-2xl border-0 bg-white/90 px-4 py-4 min-h-[120px] placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-teal-500"
+                  className="w-full resize-none rounded-default border-0 bg-white/90 px-4 py-4 min-h-[120px] placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-teal-500"
                   placeholder={placeholder}
                   {...field}
                 />
@@ -95,13 +95,13 @@ const ContactForm = () => {
           {/* Left side */}
           <div className="hidden lg:flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 sm:space-y-8">
             <Image
-              src="/speech-bubble.png"
+              src="/contact.svg"
               alt="Speech Bubble"
               width={300}
               height={173}
               className="w-40 sm:w-56 lg:w-72 h-auto"
             />
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-teal-600 leading-snug">
+            <h2 className="text-3xl sm:text-4xl  font-bold text-teal-600 leading-snug">
               Feel Free <br className="hidden sm:block" />
               To Contact Us!
             </h2>
@@ -136,7 +136,7 @@ const ContactForm = () => {
                 <div className="pt-2 sm:pt-4">
                   <Button
                     type="submit"
-                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-4 px-8 rounded-full h-14 text-lg transition-colors"
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-4 px-8 rounded-default h-14 text-lg transition-colors"
                   >
                     Send
                   </Button>

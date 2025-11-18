@@ -66,7 +66,7 @@ export default function CartButton() {
               const basePrice = (item.product_price || 0) * item.quantity;
               const extrasTotal =
                 item.extrasData?.reduce(
-                  (sum, e) => sum + e.price * item.quantity,
+                  (sum, e) => sum + e.price ,
                   0
                 ) ?? 0;
               itemPrice = basePrice + extrasTotal;

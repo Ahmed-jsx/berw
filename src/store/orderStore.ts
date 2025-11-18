@@ -353,7 +353,7 @@ export const useOrderStore = create<OrderStore>()(
               const basePrice = (item.product_price || 0) * item.quantity;
               const extrasPrice =
                 item.extrasData?.reduce(
-                  (sum, ex) => sum + (ex.price || 0) * item.quantity,
+                  (sum, ex) => sum + (ex.price || 0), // Extras are NOT multiplied by quantity
                   0
                 ) ?? 0;
               itemPrice = basePrice + extrasPrice;

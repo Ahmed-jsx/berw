@@ -72,7 +72,7 @@ function SingleProductPage({ params }: PageProps) {
     const extrasPrice =
       selectedExtras.reduce((sum, extraId) => {
         const extra = extras.find((e) => e.id === extraId);
-        return sum + (extra ? extra.price * quantity : 0);
+        return sum + (extra ? extra.price : 0); // Extras are NOT multiplied by quantity
       }, 0) ?? 0;
     return basePrice + extrasPrice;
   }, [product, quantity, selectedExtras, extras]);
@@ -438,7 +438,7 @@ function SingleProductPage({ params }: PageProps) {
                     +
                     {selectedExtras.reduce((sum, id) => {
                       const extra = extras.find((e) => e.id === id);
-                      return sum + (extra ? extra.price * quantity : 0);
+                      return sum + (extra ? extra.price : 0); // Extras are NOT multiplied by quantity
                     }, 0)}{" "}
                     EGP
                   </span>

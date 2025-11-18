@@ -7,6 +7,8 @@ import { useEffect, useMemo, useState } from "react";
 import { orderColumns } from "./columns";
 import { DataTable } from "./data-table";
 import { toast } from "sonner";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 export default function OrdersPage() {
   const { setOrderFilters } = useOrderStore();
@@ -57,7 +59,12 @@ export default function OrdersPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Orders</h1>
         <div className="flex space-x-2">
-          
+          <Link href="/dashboard/orders/create">
+            <Button className="py-2">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Order
+            </Button>
+          </Link>
           <Button disabled={isLoading} className="ml-2 py-2" onClick={
             () => {
               refetch();

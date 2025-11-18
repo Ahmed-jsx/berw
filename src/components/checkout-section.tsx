@@ -248,14 +248,14 @@ export function CheckoutSection() {
             </Link>
           </div>
 
-          <div className="mt-8 text-center">
+          {/* <div className="mt-8 text-center">
             <p className="text-white/60 text-sm leading-relaxed">
               You will receive a notification when your order is ready for
               pickup.
               <br />
               Need help? Contact us at support@restaurant.com
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     );

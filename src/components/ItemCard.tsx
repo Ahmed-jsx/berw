@@ -159,7 +159,7 @@ const ItemCard = ({
                 e.stopPropagation();
                 router.push(`${route}/${id}`);
               }}
-              className="w-full bg-white text-black py-2 mt-2 rounded-md font-medium text-sm hover:bg-gray-200 transition-colors"
+              className="w-full bg-primary text-black py-2 mt-2 rounded-md font-medium text-sm hover:bg-gray-200 transition-colors"
             >
               {buttonText}
             </motion.button>

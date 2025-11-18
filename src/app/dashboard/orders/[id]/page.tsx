@@ -11,12 +11,6 @@ import {
   CardAction,
   CardFooter,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -393,43 +387,39 @@ const OrderPage = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                    <Button variant="outline" disabled={isUpdating}>
-                      {isUpdating ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Updating...
-                        </>
-                      ) : (
-                        "Update Status"
-                      )}
-                    </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                    {orderStatusOptions.map((status) => {
-                      const isActive =
-                        order.order_status.toLowerCase() === status.toLowerCase();
-                      return (
-                  <DropdownMenuItem
-                    key={status}
-                          onClick={() => {
-                            if (status === "complete") {
-                              setShowDiscountFields(true);
-                            } else if (status === "cancelled") {
-                              // Cancel order immediately
-                              updateOrderStatus(status);
-                            }
-                          }}
-                          disabled={isUpdating || isActive}
-                    className="capitalize"
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDiscountFields(true)}
+                    disabled={isUpdating}
+                    className="flex-1 border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
                   >
-                    {status}
-                  </DropdownMenuItem>
-                      );
-                    })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Complete Order"
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => updateOrderStatus("cancelled")}
+                    disabled={isUpdating}
+                    className="flex-1 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Cancelling...
+                      </>
+                    ) : (
+                      "Cancel Order"
+                    )}
+                  </Button>
+                </div>
 
                 {/* Discount Fields - Only show when completing order */}
                 {showDiscountFields && (

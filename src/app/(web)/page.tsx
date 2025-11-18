@@ -20,7 +20,7 @@ const Home = () => {
         <ExploreCoffee />
       </section>
       <FeaturedMerch />
-      <Cta />
+      {/* <Cta /> */}
       <AnimatedSlider />
       <div className=" max-w-[1220px] px-8 lg:px-0 py-24 mx-auto">
         <ContactForm />

@@ -10,7 +10,16 @@ const nextConfig: NextConfig = {
   },
   typedRoutes: true,
   images: {
-    domains: ["res.cloudinary.com"], // ✅ Allow Cloudinary URLs
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.sanity.io',
+      },
+    ],
   },
 };
 

@@ -7,9 +7,11 @@ export function useHeroData() {
   return useQuery<HeroSection | null>({
     queryKey: ['heroSection'],
     queryFn: getHeroData,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes (previously cacheTime)
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours - data doesn't change often
+    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in cache for a week
     refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch on mount if we have prefetched data
+    refetchOnReconnect: false,
     retry: 2,
   })
 }

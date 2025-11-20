@@ -5,11 +5,12 @@ export const useProducts = () =>
   useQuery<Product[], Error>({
     queryKey: ["products"],
     queryFn: api.products.getAll,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes (same as useExtras)
-    gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
-    refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
-    refetchOnMount: false, // Don't refetch on mount if data is still fresh
-    retry: 2, // Retry up to 2 times on failure
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours - products don't change often
+    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in cache for a week
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch on mount if we have prefetched data
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
 export const useProduct = (id: number) =>

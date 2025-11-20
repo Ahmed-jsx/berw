@@ -1,4 +1,5 @@
 import { client } from '../client'
+import { cache } from 'react'
 
 // TypeScript types for Hero data
 export interface HeroSlide {
@@ -38,13 +39,22 @@ export const HERO_SECTION_QUERY = `*[_type == "heroSection"][0] {
   } | order(order asc)
 }`
 
-// Function to fetch hero data
-export async function getHeroData(): Promise<HeroSection | null> {
+// Cached fetch function - React will deduplicate requests during the same render
+// This ensures multiple components calling getHeroData() in the same render
+// will only make one request to Sanity
+const fetchHeroDataCached = cache(async (): Promise<HeroSection | null> => {
   try {
+    // Sanity client with useCdn: true already provides CDN caching
+    // This will be cached by Sanity's CDN for fast subsequent requests
     const data = await client.fetch<HeroSection>(HERO_SECTION_QUERY)
     return data
   } catch (error) {
     console.error('Error fetching hero data:', error)
     return null
   }
+})
+
+// Function to fetch hero data (exported for use in hooks and server components)
+export async function getHeroData(): Promise<HeroSection | null> {
+  return fetchHeroDataCached()
 }

@@ -11,6 +11,12 @@ export const useMerchants = () =>
   useQuery<Merchant[], Error>({
     queryKey: ["merchants"],
     queryFn: api.merchants.getAll,
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours - merchants don't change often
+    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in cache for a week
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch on mount if we have prefetched data
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
 export const useMerchant = (id: number) =>

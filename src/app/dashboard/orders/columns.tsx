@@ -23,6 +23,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useAuthStore } from "@/store/auth-store";
+import { usePathname } from "next/navigation";
 
 // Data Table Component
 interface DataTableProps<TData extends RowData> {
@@ -269,6 +271,24 @@ export function DataTable<TData extends RowData>({
   );
 }
 
+// Action cell component that uses hooks
+const ActionCell = ({ orderId }: { orderId: number }) => {
+  const role = useAuthStore((s) => s.role);
+  const pathname = usePathname();
+  
+  // Determine base path: cashier route if user is cashier or if we're in cashier context
+  const isCashierRoute = pathname?.startsWith("/cashier");
+  const basePath = (role === "cashier" || isCashierRoute) ? "/cashier" : "/dashboard";
+  
+  return (
+    <Link href={`${basePath}/orders/${orderId}` as any}>
+      <Button size="sm" variant="outline" className="hover:bg-blue-50">
+        View Details
+      </Button>
+    </Link>
+  );
+};
+
 // Column Definitions
 export const orderColumns: ColumnDef<any>[] = [
   {
@@ -390,13 +410,7 @@ export const orderColumns: ColumnDef<any>[] = [
     enableSorting: false,
     cell: (info) => {
       const order = info.row.original;
-      return (
-        <Link href={`/dashboard/orders/${order.order_id}`}>
-          <Button size="sm" variant="outline" className="hover:bg-blue-50">
-            View Details
-          </Button>
-        </Link>
-      );
+      return <ActionCell orderId={order.order_id} />;
     },
   },
 ];

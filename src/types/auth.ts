@@ -4,7 +4,8 @@ export interface User {
   name: string;
   email: string;
   number: string;
-  role: "user" | "admin"; // add more roles if needed
+  role: "user" | "admin" | "cashier";
+  is_cashier?: boolean;
 }
 
 export interface LoginRequest {

@@ -3,19 +3,11 @@
 import ItemBadge from "@/components/ItemBadge";
 import ItemCard from "@/components/ItemCard";
 import { Button } from "@/components/ui/button";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from "@/components/ui/carousel";
 import { useProducts } from "@/hooks/useProducts";
 import { useCheckoutProcess } from "@/query/useOrderQueries";
 import { useCoffeeStore } from "@/store/coffeeStore";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 // Loading Skeleton Component
 function ProductCardSkeleton() {
@@ -37,9 +29,6 @@ export function ExploreCoffee() {
   const { active, setActive } = useCoffeeStore();
   const { data: products, isLoading, error } = useProducts();
   const { checkout, isCheckingOut, checkoutError } = useCheckoutProcess();
-
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
 
   // ✅ Safe category extraction
   const categories = useMemo(() => {
@@ -103,32 +92,6 @@ export function ExploreCoffee() {
     return filteredProducts.slice(0, 6);
   }, [products, active, categories]);
 
-  // ✅ Embla Carousel API handlers
-  const onSelect = useCallback((emblaApi: CarouselApi) => {
-    if (!emblaApi) return;
-    setCurrent(emblaApi.selectedScrollSnap());
-  }, []);
-
-  useEffect(() => {
-    if (!api) return;
-
-    onSelect(api);
-    api.on("reInit", onSelect);
-    api.on("select", onSelect);
-
-    return () => {
-      api.off("select", onSelect);
-      api.off("reInit", onSelect);
-    };
-  }, [api, onSelect]);
-
-  // Reset carousel when category changes
-  useEffect(() => {
-    if (api) {
-      api.scrollTo(0);
-    }
-  }, [active, api]);
-
   const activeCategoryLabel =
     categories.find((c) => c.value === active)?.label ||
     categories[0]?.label ||
@@ -165,19 +128,12 @@ export function ExploreCoffee() {
         {/* ✅ Loading & Error States */}
         {isLoading && (
           <div className="mt-8">
-            <div className="hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 sm:overflow-visible snap-x snap-mandatory">
               {Array.from({ length: 6 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
+                <div key={i} className="flex-none w-[280px] sm:w-auto snap-center mr-4 sm:mr-0">
+                  <ProductCardSkeleton />
+                </div>
               ))}
-            </div>
-            <div className="sm:hidden">
-              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 w-[85vw] snap-center">
-                    <ProductCardSkeleton />
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         )}
@@ -206,22 +162,26 @@ export function ExploreCoffee() {
           </div>
         )}
 
-        {/* ✅ Desktop Grid */}
+        {/* ✅ Mobile: Horizontal Scroll | Desktop: Grid */}
         {!isLoading && !error && (
-          <div className="mt-8 hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="mt-8 flex overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 sm:overflow-visible snap-x snap-mandatory">
             {visible.map((item) => (
-              <ItemCard
+              <div
                 key={item.product_id}
-                id={item.product_id}
-                name={item.product_name}
-                description={item.product_components || ""}
-                price={Number(item.product_price)}
-                product_photo={item.product_photo || ""}
-              />
+                className="flex-none w-[280px] sm:w-auto snap-center mr-4 sm:mr-0"
+              >
+                <ItemCard
+                  id={item.product_id}
+                  name={item.product_name}
+                  description={item.product_components || ""}
+                  price={Number(item.product_price)}
+                  product_photo={item.product_photo || ""}
+                />
+              </div>
             ))}
 
             {visible.length === 0 && (
-              <div className="col-span-full text-center py-12">
+              <div className="col-span-full text-center py-12 min-w-full">
                 <div className="inline-flex flex-col items-center gap-3 p-6 rounded-lg bg-gray-50 border border-gray-200">
                   <p className="text-gray-600 font-medium">
                     No items yet in this category.
@@ -232,94 +192,6 @@ export function ExploreCoffee() {
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {/* ✅ Mobile Carousel */}
-        {!isLoading && !error && visible.length > 0 && (
-          <div className="sm:hidden mt-8 relative px-2">
-            <Carousel
-              setApi={setApi}
-              opts={{
-                align: "start",
-                loop: visible.length > 1,
-                dragFree: false,
-              }}
-              className="w-full"
-            >
-              <div className="relative">
-                <CarouselContent className="-ml-2 md:-ml-4">
-                  {visible.map((item) => (
-                    <CarouselItem
-                      key={item.product_id}
-                      className="pl-2 md:pl-4 basis-full"
-                    >
-                      <div className="px-2">
-                        <ItemCard
-                          id={item.product_id}
-                          name={item.product_name}
-                          description={item.product_components || ""}
-                          price={Number(item.product_price)}
-                          product_photo={item.product_photo || ""}
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-
-                {/* Navigation Arrows */}
-                {visible.length > 1 && (
-                  <>
-                    <CarouselPrevious
-                      className="left-2 md:left-4 h-10 w-10 bg-white/90 hover:bg-white shadow-lg border-0 disabled:opacity-30"
-                      aria-label="Previous product"
-                    />
-                    <CarouselNext
-                      className="right-2 md:right-4 h-10 w-10 bg-white/90 hover:bg-white shadow-lg border-0 disabled:opacity-30"
-                      aria-label="Next product"
-                    />
-                  </>
-                )}
-              </div>
-            </Carousel>
-
-            {/* Enhanced Indicators */}
-            {visible.length > 1 && (
-              <div className="flex items-center justify-center gap-3 mt-6">
-                <div className="flex items-center gap-2">
-                  {visible.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => api?.scrollTo(i)}
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        i === current
-                          ? "bg-teal-600 w-8"
-                          : "bg-gray-300 w-2 hover:bg-gray-400"
-                      }`}
-                      aria-label={`Go to slide ${i + 1}`}
-                      aria-current={i === current ? "true" : "false"}
-                    />
-                  ))}
-                </div>
-                <span className="text-xs text-gray-500 ml-2 font-medium">
-                  {current + 1} / {visible.length}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Empty State for Mobile */}
-        {!isLoading && !error && visible.length === 0 && (
-          <div className="sm:hidden mt-8 text-center px-4">
-            <div className="inline-flex flex-col items-center gap-3 p-6 rounded-lg bg-gray-50 border border-gray-200">
-              <p className="text-gray-600 font-medium">
-                No items yet in this category.
-              </p>
-              <p className="text-sm text-gray-500">
-                Check back later for new products!
-              </p>
-            </div>
           </div>
         )}
 

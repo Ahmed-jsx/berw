@@ -3,17 +3,8 @@
 import SectionHeader from "@/components/global/SectionHeader";
 import ItemCard from "@/components/ItemCard";
 import { Button } from "@/components/ui/button";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from "@/components/ui/carousel";
 import { useMerchants } from "@/hooks/useMerch";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 
 // Loading Skeleton Component
 function MerchCardSkeleton() {
@@ -34,9 +25,6 @@ const FeaturedMerch = () => {
   const router = useRouter();
   const { data: merchants, isLoading, error } = useMerchants();
 
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
-
   // Limit to a maximum of 4 merchants
   const items = merchants?.slice(0, 4) ?? [];
   const hasMerchants = items.length > 0;
@@ -46,25 +34,6 @@ const FeaturedMerch = () => {
     router.push("/merch");
   };
 
-  // ✅ Embla Carousel API handlers
-  const onSelect = useCallback((emblaApi: CarouselApi) => {
-    if (!emblaApi) return;
-    setCurrent(emblaApi.selectedScrollSnap());
-  }, []);
-
-  useEffect(() => {
-    if (!api) return;
-
-    onSelect(api);
-    api.on("reInit", onSelect);
-    api.on("select", onSelect);
-
-    return () => {
-      api.off("select", onSelect);
-      api.off("reInit", onSelect);
-    };
-  }, [api, onSelect]);
-
   return (
     <section className="max-w-[1220px] px-8 lg:px-0 py-24 mx-auto">
       <SectionHeader title="Shop Our Merch" />
@@ -72,19 +41,12 @@ const FeaturedMerch = () => {
       {/* ✅ Loading State */}
       {isLoading && (
         <div className="mt-12">
-          <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex overflow-x-auto pb-6 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible snap-x snap-mandatory">
             {Array.from({ length: 3 }).map((_, i) => (
-              <MerchCardSkeleton key={i} />
+              <div key={i} className="flex-none w-[280px] md:w-auto snap-center mr-4 md:mr-0">
+                <MerchCardSkeleton />
+              </div>
             ))}
-          </div>
-          <div className="md:hidden">
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[85vw] snap-center">
-                  <MerchCardSkeleton />
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       )}
@@ -129,96 +91,26 @@ const FeaturedMerch = () => {
         </div>
       )}
 
-      {/* ✅ Desktop Grid */}
+      {/* ✅ Mobile: Horizontal Scroll | Desktop: Grid */}
       {!isLoading && !error && hasMerchants && (
         <>
-          <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+          <div className="flex overflow-x-auto pb-6 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible snap-x snap-mandatory mt-12">
             {items.map((item) => (
-              <ItemCard
+              <div
                 key={item.merchant_id}
-                id={item.merchant_id}
-                name={item.merchant_name}
-                description={item.merchant_description}
-                price={Number(item.merchant_price)}
-                product_photo={item.merchant_photo}
-                route="/merch"
-                buttonText="View Details"
-              />
+                className="flex-none w-[280px] md:w-auto snap-center mr-4 md:mr-0"
+              >
+                <ItemCard
+                  id={item.merchant_id}
+                  name={item.merchant_name}
+                  description={item.merchant_description}
+                  price={Number(item.merchant_price)}
+                  product_photo={item.merchant_photo}
+                  route="/merch"
+                  buttonText="View Details"
+                />
+              </div>
             ))}
-          </div>
-
-          {/* ✅ Mobile Carousel */}
-          <div className="md:hidden mt-12 relative px-2">
-            <Carousel
-              setApi={setApi}
-              opts={{
-                align: "start",
-                loop: items.length > 1,
-                dragFree: false,
-              }}
-              className="w-full"
-            >
-              <div className="relative">
-                <CarouselContent className="-ml-2">
-                  {items.map((item) => (
-                    <CarouselItem
-                      key={item.merchant_id}
-                      className="pl-2 basis-full"
-                    >
-                      <div className="px-2">
-                        <ItemCard
-                          id={item.merchant_id}
-                          name={item.merchant_name}
-                          description={item.merchant_description}
-                          price={Number(item.merchant_price)}
-                          product_photo={item.merchant_photo}
-                          route="/merch"
-                          buttonText="View Details"
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-
-                {/* Navigation Arrows */}
-                {items.length > 1 && (
-                  <>
-                    <CarouselPrevious
-                      className="left-2 h-10 w-10 bg-white/90 hover:bg-white shadow-lg border-0 disabled:opacity-30"
-                      aria-label="Previous merchandise item"
-                    />
-                    <CarouselNext
-                      className="right-2 h-10 w-10 bg-white/90 hover:bg-white shadow-lg border-0 disabled:opacity-30"
-                      aria-label="Next merchandise item"
-                    />
-                  </>
-                )}
-              </div>
-            </Carousel>
-
-            {/* Enhanced Indicators */}
-            {items.length > 1 && (
-              <div className="flex items-center justify-center gap-3 mt-6">
-                <div className="flex items-center gap-2">
-                  {items.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => api?.scrollTo(i)}
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        i === current
-                          ? "bg-teal-600 w-8"
-                          : "bg-gray-300 w-2 hover:bg-gray-400"
-                      }`}
-                      aria-label={`Go to slide ${i + 1}`}
-                      aria-current={i === current ? "true" : "false"}
-                    />
-                  ))}
-                </div>
-                <span className="text-xs text-gray-500 ml-2 font-medium">
-                  {current + 1} / {items.length}
-                </span>
-              </div>
-            )}
           </div>
 
           {/* ✅ Show All Button */}

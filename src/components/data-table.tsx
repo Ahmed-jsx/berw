@@ -32,8 +32,9 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useUsers } from "@/hooks/useUsers";
+import { useAuthStore } from "@/store/auth-store";
 
 // ---------------- SCHEMA ----------------
 export const schema = z.object({
@@ -95,9 +96,17 @@ function TableSkeleton() {
 function ActionDropdown({ userId }: { userId: number }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(false);
+  const role = useAuthStore((s) => s.role);
+  const pathname = usePathname();
+  
+  // Determine if we're in cashier or dashboard context
+  const isCashierRoute = pathname?.startsWith("/cashier");
+  const basePath = isCashierRoute ? "/cashier" : "/dashboard";
+  const isCashier = role === "cashier";
 
   const handleViewDetails = () => {
-    router.push(`/dashboard/users/${userId}`);
+    const path = `${basePath}/users/${userId}` as any;
+    router.push(path);
     setIsOpen(false);
   };
 
@@ -140,13 +149,17 @@ function ActionDropdown({ userId }: { userId: number }) {
             >
               <Edit className="h-4 w-4" /> Edit User
             </button>
-            <hr className="my-1 border-gray-100" />
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" /> Delete User
-            </button>
+            {!isCashier && (
+              <>
+                <hr className="my-1 border-gray-100" />
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" /> Delete User
+                </button>
+              </>
+            )}
           </div>
         </>
       )}
@@ -211,9 +224,9 @@ export function DataTable() {
     if (!data?.users) return [];
     return data.users.map((u) => ({
       id: u.id,
-      name: u.name,
-      email: u.email,
-      phone: u.number,
+      name: (u as any).user_name || (u as any).name || "",
+      email: (u as any).user_email || (u as any).email || "",
+      phone: (u as any).user_number || (u as any).number || "",
       orderCount: u.total_orders,
 
       is_frequent_visitor: u.is_frequent_visitor,
@@ -237,7 +250,7 @@ export function DataTable() {
           const user = row.original;
           const initials = user.name
             .split(" ")
-            .map((n) => n[0])
+            .map((n: string) => n[0])
             .join("")
             .toUpperCase();
           return (

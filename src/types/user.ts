@@ -10,10 +10,11 @@ export interface User {
   updated_at: string;
   google_id: string | null;
   is_admin: boolean;
+  is_cashier: boolean;
   points: number;
   points_redeemed: number;
   visits_per_week: number;
-  role: "user" | "admin";
+  role: "user" | "admin" | "cashier";
   total_orders: number;
   total_spent: number;
   avg_order_value: number;

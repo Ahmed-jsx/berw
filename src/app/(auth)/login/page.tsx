@@ -6,10 +6,19 @@ import { Suspense } from "react";
 
 export default function LoginPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const role = useAuthStore((s) => s.role);
 
   if (isAuthenticated) {
-    redirect("/dashboard");
+    // Redirect based on role
+    if (role === "admin") {
+      redirect("/dashboard");
+    } else if (role === "cashier") {
+      redirect("/cashier");
+    } else {
+      redirect("/");
+    }
   }
+  
   return (
     <div className=" flex min-h-svh justify-center items-center">
       <div className="flex w-full max-w-[450px] flex-col gap-6">

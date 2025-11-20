@@ -6,7 +6,7 @@ interface AuthState {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
-  role: "user" | "admin" | null;
+  role: "user" | "admin" | "cashier" | null;
   setAuth: (token: string, user: User) => void;
   setRole: (role: string) => void;
   clearAuth: () => void;
@@ -20,18 +20,28 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       role: null,
 
-      // ✅ store role from API response
-      setAuth: (token, user) =>
+      // ✅ store role from API response - check is_cashier first, then is_admin/role
+      setAuth: (token, user) => {
+        let role: "user" | "admin" | "cashier" = "user";
+        
+        // Check is_cashier flag first (from user.ts User type)
+        if ((user as any).is_cashier === true) {
+          role = "cashier";
+        } else if (user.role === "admin" || (user as any).is_admin === true) {
+          role = "admin";
+        }
+        
         set({
           token,
           user,
           isAuthenticated: true,
-          role: user.role === "admin" ? "admin" : "user",
-        }),
+          role,
+        });
+      },
 
       setRole: (role) =>
         set({
-          role: role === "admin" ? "admin" : "user",
+          role: role === "admin" ? "admin" : role === "cashier" ? "cashier" : "user",
         }),
 
       clearAuth: () =>

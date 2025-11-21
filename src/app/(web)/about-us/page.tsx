@@ -9,14 +9,17 @@ export default function AboutUs() {
       {/* Background image */}
       <div className="absolute inset-0">
         <Image
-          src="/about-us.png"
+          src="/about-us-2.jpg"
           alt="About Us Background"
           fill
+          quality={100}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
           style={{ objectFit: "cover" }}
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/25" />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/25 z-[1]" />
       </div>
 
       {/* Content */}

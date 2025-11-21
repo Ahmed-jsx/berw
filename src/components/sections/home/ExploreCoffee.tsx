@@ -201,6 +201,7 @@ export function ExploreCoffee() {
                   description={item.product_components || ""}
                   price={Number(item.product_price)}
                   product_photo={item.product_photo || ""}
+                  route="/menu"
                 />
               </div>
             ))}

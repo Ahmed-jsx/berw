@@ -6,37 +6,37 @@ export default function AboutUs() {
   return (
     <>
     <main className="relative min-h-screen max-w-full lg:max-w-[calc(100vw-6rem)] lg:my-8 lg:mx-auto lg:rounded-[40px] overflow-hidden">
-      {/* Background image */}
-      <div className="absolute inset-0">
-        <Image
-          src="/about-us-2.jpg"
-          alt="About Us Background"
-          fill
-          quality={100}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
-          style={{ objectFit: "cover" }}
-          className="object-cover"
-          priority
-        />
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/25 z-[1]" />
-      </div>
+  {/* Background image + Overlay */}
+  <div className="absolute inset-0">
+    <Image
+      src="/about-us-2.jpg"
+      alt="About Us Background"
+      fill
+      quality={100}
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
+      style={{ objectFit: "cover" }}
+      className="object-cover"
+      priority
+    />
+    {/* Overlay - now INSIDE the background div */}
+    <div className="absolute inset-0 bg-black/50" />
+  </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen px-4">
-        <section className="max-w-6xl mx-auto w-full">
-          <div className="text-center space-y-8">
-            <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold text-white leading-tight max-w-6xl mx-auto">
-              At Monkey Brew,<br className="hidden sm:inline" />
-              the cup is just the beginning.
-            </h1>
-            <p className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-              So come in. Sit down. Stay awhile—or just grab your cup and savour the road ahead.
-            </p>
-          </div>
-        </section>
+  {/* Content - z-10 is now above the background (which has no z-index) */}
+  <div className="relative z-10 flex items-center justify-center min-h-screen px-4">
+    <section className="max-w-6xl mx-auto w-full">
+      <div className="text-center space-y-8">
+        <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold text-white leading-tight max-w-6xl mx-auto">
+          At Monkey Brew,<br className="hidden sm:inline" />
+          the cup is just the beginning.
+        </h1>
+        <p className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+          So come in. Sit down. Stay awhile—or just grab your cup and savour the road ahead.
+        </p>
       </div>
-    </main>
+    </section>
+  </div>
+</main>
     <section className="max-w-7xl mx-auto flex my-16 px-4 md:px-6 lg:px-0 justify-center items-center">
       <div className="flex flex-col gap-6 items-center text-center">
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-secondary">More Than Just Coffee</h2>

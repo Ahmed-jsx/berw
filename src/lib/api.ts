@@ -212,21 +212,88 @@ export const api = {
     },
 
     // Update product
-    update: async (id: number, body: Partial<Product>): Promise<Product> => {
-      const res = await fetch(`${API_URL}/products/${id}`, {
-        method: "PUT", // confirm if backend uses PUT or PATCH
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(`Failed to update product ${id}`);
-      const data: unknown = await res.json();
-      const parsed = z
-        .object({
-          message: z.string(),
-          product: ProductSchema,
-        })
-        .parse(data);
-      return parsed.product;
+    update: async (id: number, body: Partial<Product> & { product_photo?: File }): Promise<Product> => {
+      try {
+        // Check if we have a file upload (image)
+        const hasFile = body.product_photo instanceof File;
+        
+        if (hasFile) {
+          // Use FormData for file uploads
+          const formData = new FormData();
+          
+          // Append only provided fields
+          if (body.product_name) {
+            formData.append("product_name", body.product_name);
+          }
+          // Handle both 'category' and 'product_category' fields
+          if ((body as any).category) {
+            formData.append("category", (body as any).category);
+          } else if (body.product_category) {
+            formData.append("category", body.product_category);
+          }
+          // Handle both 'price' (number) and 'product_price' (string)
+          if ((body as any).price !== undefined) {
+            formData.append("price", String((body as any).price));
+          } else if (body.product_price !== undefined) {
+            formData.append("price", String(body.product_price));
+          }
+          if (body.product_components !== undefined) {
+            formData.append("product_components", body.product_components || "");
+          }
+          if (body.is_featured !== undefined) {
+            formData.append("is_featured", String(body.is_featured));
+          }
+          if (body.has_points !== undefined) {
+            formData.append("has_points", String(body.has_points));
+          }
+          
+          // File upload
+          if (body.product_photo) {
+            formData.append("product_photo", body.product_photo);
+          }
+          
+          const res = await axios.put(`${API_URL}/products/${id}`, formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+          
+          const parsed = z
+            .object({
+              message: z.string(),
+              product: ProductSchema,
+            })
+            .parse(res.data);
+          return parsed.product;
+        } else {
+          // Use JSON for non-file updates
+          const res = await fetch(`${API_URL}/products/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          if (!res.ok) throw new Error(`Failed to update product ${id}`);
+          const data: unknown = await res.json();
+          const parsed = z
+            .object({
+              message: z.string(),
+              product: ProductSchema,
+            })
+            .parse(data);
+          return parsed.product;
+        }
+      } catch (err: any) {
+        if (axios.isAxiosError(err)) {
+          const errorMsg =
+            err.response?.data?.message ||
+            err.response?.data?.error ||
+            "Unknown error";
+          throw new Error(
+            `Failed to update product (${err.response?.status}): ${errorMsg}`
+          );
+        }
+        throw err;
+      }
     },
 
     // Delete product

@@ -13,7 +13,7 @@ export const useProductMutations = () => {
   });
 
   const update = useMutation({
-    mutationFn: ({ id, body }: { id: number; body: Partial<Product> }) =>
+    mutationFn: ({ id, body }: { id: number; body: Partial<Product> & { product_photo?: File } }) =>
       api.products.update(id, body),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });

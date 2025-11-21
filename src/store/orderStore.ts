@@ -5,7 +5,8 @@ import { devtools, persist } from "zustand/middleware";
 import { CheckoutItem, Order, OrderStatus } from "@/types/order";
 import { Extra } from "@/types/extras";
 
-type CheckoutExtras = number[];
+// Map of extra ID to quantity
+type CheckoutExtras = { [extraId: number]: number };
 
 interface CartItem {
   // Common fields
@@ -19,7 +20,7 @@ interface CartItem {
   product_price?: number;
   product_photo?: string;
   product_category?: string;
-  extras?: CheckoutExtras; // Only for products
+  extras?: CheckoutExtras; // Only for products - Map of extra ID to quantity
   extrasData?: Extra[]; // Hydrated extras for UI
 
   // Merchant-specific fields
@@ -111,10 +112,15 @@ export const useOrderStore = create<OrderStore>()(
         isOrderDetailsModalOpen: false,
         selectedOrderForDetails: null,
 
-        // Helper to hydrate extras by ID
-        getExtrasDataByIds: (ids: number[] = [], allExtras: Extra[] = []) => {
+        // Helper to hydrate extras by ID with quantities
+        getExtrasDataByIds: (extrasMap: CheckoutExtras = {}, allExtras: Extra[] = []) => {
           const lookup = new Map(allExtras.map((ex) => [ex.id, ex]));
-          return ids.map((id) => lookup.get(id)).filter(Boolean) as Extra[];
+          return Object.entries(extrasMap)
+            .map(([id, quantity]) => {
+              const extra = lookup.get(Number(id));
+              return extra ? { ...extra, quantity } : null;
+            })
+            .filter(Boolean) as (Extra & { quantity: number })[];
         },
 
         // Add to cart (supports both products and merchants)
@@ -139,7 +145,7 @@ export const useOrderStore = create<OrderStore>()(
 
             // Hydrate extras for products
             const hydrateExtras = isProduct
-              ? get().getExtrasDataByIds(item.extras || [], allExtras)
+              ? get().getExtrasDataByIds(item.extras || {}, allExtras)
               : [];
 
             console.log("💎 Hydrated extras:", hydrateExtras);
@@ -148,23 +154,18 @@ export const useOrderStore = create<OrderStore>()(
               const updatedItems = [...state.cartItems];
               const existing = updatedItems[existingItemIndex];
 
+              // Merge extras quantities
+              const mergedExtras = isProduct ? {
+                ...(existing.extras || {}),
+                ...(item.extras || {}),
+              } : {};
+
               updatedItems[existingItemIndex] = {
                 ...existing,
                 quantity: existing.quantity + item.quantity,
                 ...(isProduct && {
-                  extras: Array.from(
-                    new Set([
-                      ...(existing.extras || []),
-                      ...(item.extras || []),
-                    ])
-                  ),
-                  extrasData: Array.from(
-                    new Map(
-                      [...(existing.extrasData || []), ...hydrateExtras].map(
-                        (e) => [e.id, e]
-                      )
-                    ).values()
-                  ),
+                  extras: mergedExtras,
+                  extrasData: get().getExtrasDataByIds(mergedExtras, allExtras),
                 }),
               };
 
@@ -178,7 +179,7 @@ export const useOrderStore = create<OrderStore>()(
             const newItem: CartItem = {
               ...item,
               ...(isProduct && {
-                extras: item.extras || [],
+                extras: item.extras || {},
                 extrasData: hydrateExtras,
               }),
             };
@@ -204,7 +205,7 @@ export const useOrderStore = create<OrderStore>()(
 
               if (item.type === "product" && updates.extras) {
                 const hydrateExtras = get().getExtrasDataByIds(
-                  updates.extras,
+                  updates.extras as CheckoutExtras,
                   allExtras
                 );
                 return {
@@ -280,11 +281,22 @@ export const useOrderStore = create<OrderStore>()(
             user_id: userId,
             items: cartItems.map((item) => {
               if (item.type === "product") {
+                // Convert extras map to array format expected by API
+                // If API expects [1, 1, 2] for 2x extra 1 and 1x extra 2, we flatten it
+                // Otherwise, keep as object if API supports it
+                const extrasArray: number[] = [];
+                if (item.extras) {
+                  Object.entries(item.extras).forEach(([id, quantity]) => {
+                    for (let i = 0; i < quantity; i++) {
+                      extrasArray.push(Number(id));
+                    }
+                  });
+                }
                 return {
                   type: "product",
                   product_id: item.product_id!,
                   quantity: item.quantity,
-                  extras: item.extras || [],
+                  extras: extrasArray,
                 };
               } else {
                 return {
@@ -353,7 +365,7 @@ export const useOrderStore = create<OrderStore>()(
               const basePrice = (item.product_price || 0) * item.quantity;
               const extrasPrice =
                 item.extrasData?.reduce(
-                  (sum, ex) => sum + (ex.price || 0), // Extras are NOT multiplied by quantity
+                  (sum, ex) => sum + (ex.price || 0) * ((ex as any).quantity || 1),
                   0
                 ) ?? 0;
               itemPrice = basePrice + extrasPrice;

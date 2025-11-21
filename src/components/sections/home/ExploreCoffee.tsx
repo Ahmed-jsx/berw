@@ -8,6 +8,9 @@ import { useCheckoutProcess } from "@/query/useOrderQueries";
 import { useCoffeeStore } from "@/store/coffeeStore";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { fetchExtras } from "@/lib/fetchers/extras";
 
 // Loading Skeleton Component
 function ProductCardSkeleton() {
@@ -26,6 +29,7 @@ function ProductCardSkeleton() {
 
 export function ExploreCoffee() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { active, setActive } = useCoffeeStore();
   const { data: products, isLoading, error } = useProducts();
   const { checkout, isCheckingOut, checkoutError } = useCheckoutProcess();
@@ -91,6 +95,27 @@ export function ExploreCoffee() {
 
     return filteredProducts.slice(0, 6);
   }, [products, active, categories]);
+
+  // Prefetch individual product data and extras when visible products are loaded
+  useEffect(() => {
+    if (visible.length > 0) {
+      // Prefetch extras once (same for all products)
+      queryClient.prefetchQuery({
+        queryKey: ["extras"],
+        queryFn: fetchExtras,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+      });
+
+      // Prefetch individual product data for each visible item
+      visible.forEach((item) => {
+        queryClient.prefetchQuery({
+          queryKey: ["products", item.product_id],
+          queryFn: () => api.products.getById(item.product_id),
+          staleTime: 1000 * 60 * 5, // 5 minutes
+        });
+      });
+    }
+  }, [visible, queryClient]);
 
   const activeCategoryLabel =
     categories.find((c) => c.value === active)?.label ||

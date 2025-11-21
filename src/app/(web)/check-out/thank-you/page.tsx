@@ -231,7 +231,7 @@ export default function ThankYouPage() {
             </Button>
           </Link>
 
-          <Link href="/orders" className="flex-1">
+          <Link href="/me" className="flex-1">
             <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-full py-3">
               <Receipt className="h-4 w-4 mr-2" />
               View My Orders

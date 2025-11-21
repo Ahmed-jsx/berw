@@ -214,7 +214,7 @@ export default function Hero() {
             </AnimatePresence>
 
             {/* Carousel Dots */}
-            <div className="flex justify-center mt-24 space-x-3">
+          { slides.length > 1 && <div className="flex justify-center mt-24 space-x-3">
               {slides.map((_, index) => (
                 <motion.button
                   key={index}
@@ -231,7 +231,7 @@ export default function Hero() {
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
-            </div>
+            </div>}
           </div>
         </section>
       </div>

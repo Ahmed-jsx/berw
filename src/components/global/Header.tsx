@@ -12,6 +12,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { Menu, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { type Route } from "next";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import CartButton from "./CartButton";
@@ -20,19 +21,29 @@ import Logo from "./Logo";
 const Header = () => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const isActive = (path: string) => pathname === path;
+  
+  // Enhanced active state: handles exact matches and dynamic routes
+  const isActive = (path: string | Route) => {
+    const pathString = typeof path === "string" ? path : String(path);
+    
+    // Exact match
+    if (pathname === pathString) return true;
+    
+    // Special case: Home should only match exactly "/"
+    if (pathString === "/") return false;
+    
+    // For dynamic routes: check if pathname starts with path + "/"
+    // This handles /menu/[id] and /merch/[id]
+    if (pathname.startsWith(pathString + "/")) return true;
+    
+    return false;
+  };
+  
   const auth = pathname === "/login" || pathname === "/sign-up";
   const isComingSoon = pathname === "/coming-soon";
   const { user, isAuthenticated } = useAuthStore();
-  const [scroll, setScroll] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScroll(window.scrollY > 0);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+ 
 
   const handleLinkClick = () => setIsOpen(false);
 
@@ -42,7 +53,6 @@ const Header = () => {
         "fixed left-1/2 transform -translate-x-1/2 z-50 w-[95%] max-w-7xl mx-auto transition-all duration-500 ease-out",
         "sm:top-8 lg:top-16",
         "top-4", // base top
-        scroll && "top-0 -translate-y-1 shadow-lg", // slide up on scroll
         auth && "top-2 sm:top-4",
         isComingSoon && "hidden"
       )}
@@ -58,20 +68,23 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
-              {NAV_ITEMS.map((item) => (
-                <Link key={item.title} href={item.href || "#"}>
-                  <span
-                    className={cn(
-                      "text-white/70 transition-all duration-300 hover:text-white px-4 py-2 rounded-xl text-sm font-medium",
-                      "hover:bg-white/10 active:scale-95",
-                      isActive(item.href) &&
-                        "text-white bg-white/15 border border-white/20 shadow-lg backdrop-blur-sm"
-                    )}
-                  >
-                    {item.title}
-                  </span>
-                </Link>
-              ))}
+              {NAV_ITEMS.map((item) => {
+                const href = item.href as Route;
+                return (
+                  <Link key={item.title} href={href}>
+                    <span
+                      className={cn(
+                        "text-white/70 transition-all duration-300 hover:text-white px-4 py-2 rounded-xl text-sm font-medium",
+                        "hover:bg-white/10 active:scale-95",
+                        isActive(item.href) &&
+                          "text-white bg-white/15 border border-white/20 shadow-lg backdrop-blur-sm"
+                      )}
+                    >
+                      {item.title}
+                    </span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
@@ -92,7 +105,7 @@ const Header = () => {
                       <User className="size-4 text-black" />
                     </div>
                     <span className="text-sm max-w-[120px] truncate">
-                      {user?.email}
+                      {user?.name}
                     </span>
                   </div>
                 </Link>
@@ -136,23 +149,26 @@ const Header = () => {
                 <div className="flex flex-col h-full">
                   {/* Mobile Navigation */}
                   <nav className="mt-6 flex flex-col gap-2">
-                    {NAV_ITEMS.map((item) => (
-                      <Link
-                        key={item.title}
-                        href={item.href || "#"}
-                        onClick={handleLinkClick}
-                      >
-                        <div
-                          className={cn(
-                            "flex items-center px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium border border-transparent",
-                            isActive(item.href) &&
-                              "bg-white/15 text-white border-white/20 shadow-lg"
-                          )}
+                    {NAV_ITEMS.map((item) => {
+                      const href = item.href as Route;
+                      return (
+                        <Link
+                          key={item.title}
+                          href={href}
+                          onClick={handleLinkClick}
                         >
-                          {item.title}
-                        </div>
-                      </Link>
-                    ))}
+                          <div
+                            className={cn(
+                              "flex items-center px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium border border-transparent",
+                              isActive(item.href) &&
+                                "bg-white/15 text-white border-white/20 shadow-lg"
+                            )}
+                          >
+                            {item.title}
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </nav>
 
                   {/* Mobile Auth Section */}

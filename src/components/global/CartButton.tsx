@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { useOrderStore } from "@/store/orderStore";
 import { Card } from "@/components/ui/card";
-import { Trash2, ShoppingBag, Package } from "lucide-react";
+import { Trash2, ShoppingBag, Package, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 
 export default function CartButton() {
@@ -28,7 +28,7 @@ export default function CartButton() {
           variant="outline"
           className="relative rounded-full p-3 flex items-center backdrop-blur-md bg-white/20 border-white/30 shadow-lg hover:bg-white/30 transition-all duration-200"
         >
-          <span className="font-medium">Cart</span>
+          <span className="font-medium flex items-center gap-2">Cart <ShoppingCart className="h-4 w-4" /></span>
           {cartItems.length > 0 && (
             <span className="rounded-full bg-primary absolute -top-3 -right-4 text-white px-3 py-1 text-sm font-semibold shadow-md">
               {getCartItemsCount()}
@@ -66,7 +66,7 @@ export default function CartButton() {
               const basePrice = (item.product_price || 0) * item.quantity;
               const extrasTotal =
                 item.extrasData?.reduce(
-                  (sum, e) => sum + e.price ,
+                  (sum, e) => sum + (e.price || 0) * ((e as any).quantity || 1),
                   0
                 ) ?? 0;
               itemPrice = basePrice + extrasTotal;
@@ -160,14 +160,18 @@ export default function CartButton() {
                             Extras:
                           </p>
                           <div className="flex flex-wrap gap-1">
-                            {item.extrasData.map((e) => (
-                              <span
-                                key={e.id}
-                                className="inline-block bg-white/10 text-white text-xs px-2 py-1 rounded-full border border-white/20"
-                              >
-                                {e.name} (+{e.price} EGP)
-                              </span>
-                            ))}
+                            {item.extrasData.map((e) => {
+                              const extraQuantity = (e as any).quantity || 1;
+                              const extraTotal = (e.price || 0) * extraQuantity;
+                              return (
+                                <span
+                                  key={e.id}
+                                  className="inline-block bg-white/10 text-white text-xs px-2 py-1 rounded-full border border-white/20"
+                                >
+                                  {e.name} x{extraQuantity} (+{extraTotal} EGP)
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

@@ -354,6 +354,17 @@ export function CheckoutSection() {
                 : item.merchant_photo;
               const itemId = isProduct ? item.product_id : item.merchant_id;
 
+              // Calculate total price for this item including extras
+              const basePrice = (itemPrice || 0) * item.quantity;
+              const extrasTotal = isProduct
+                ? item.extrasData?.reduce(
+                    (sum, ex) =>
+                      sum + (ex.price || 0) * ((ex as any).quantity || 1),
+                    0
+                  ) ?? 0
+                : 0;
+              const itemTotalPrice = basePrice + extrasTotal;
+
               return (
                 <div
                   key={`${item.type}-${itemId}-${index}`}
@@ -384,34 +395,41 @@ export function CheckoutSection() {
                   {/* Item Info */}
                   <div className="flex-1 w-full">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                      <div className="text-center sm:text-left">
+                      <div className="text-center sm:text-left flex-1">
                         <h3 className="font-medium text-gray-900 break-words">
                           {itemName || "Unknown Item"}
                         </h3>
                         <p className="text-xs text-gray-500">
                           {isProduct ? "Product" : "Merchandise"}
                         </p>
-                        <p className="text-primary font-semibold mt-1">
-                          {(itemPrice || 0).toFixed(2)} EGP
+                        <p className="text-sm text-gray-600 mt-1">
+                          {(itemPrice || 0).toFixed(2)} EGP each × {item.quantity}
                         </p>
-                        {isProduct && item.extras && item.extras.length > 0 && (
+                        {isProduct && item.extras && Object.keys(item.extras).length > 0 && (
                           <div className="flex flex-wrap justify-center sm:justify-start gap-1 mt-2">
-                            {item.extrasData?.map((extra) => (
-                              <span
-                                key={extra.id}
-                                className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600"
-                              >
-                                {extra.name} (+{extra.price} EGP)
-                              </span>
-                            ))}
+                            {item.extrasData?.map((extra) => {
+                              const extraQuantity = (extra as any).quantity || 1;
+                              const extraTotal = (extra.price || 0) * extraQuantity;
+                              return (
+                                <span
+                                  key={extra.id}
+                                  className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600"
+                                >
+                                  {extra.name} × {extraQuantity} (+{extraTotal.toFixed(2)} EGP)
+                                </span>
+                              );
+                            })}
                           </div>
                         )}
+                        <p className="text-primary font-bold text-lg mt-2">
+                          Total: {itemTotalPrice.toFixed(2)} EGP
+                        </p>
                       </div>
 
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="self-end sm:self-auto size-8 text-gray-400 hover:text-gray-600"
+                        className="self-end sm:self-auto size-8 text-gray-400 hover:text-gray-600 flex-shrink-0"
                         onClick={() =>
                           handleRemoveItem(
                             isProduct
@@ -426,7 +444,7 @@ export function CheckoutSection() {
                   </div>
 
                   {/* Quantity Controls */}
-                  <div className="flex justify-center sm:justify-end items-center gap-2">
+                  <div className="flex justify-center sm:justify-end items-center gap-2 flex-shrink-0">
                     <Button
                       variant="outline"
                       size="icon"

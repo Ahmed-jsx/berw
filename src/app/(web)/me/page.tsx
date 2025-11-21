@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -13,27 +14,43 @@ import {
 } from "@/components/ui/table";
 import { useUserById } from "@/query/users";
 import { useAuthStore } from "@/store/auth-store";
+import { useOrderStore } from "@/store/orderStore";
 import {
   Award,
   Calendar,
   DollarSign,
+  LogOut,
   Mail,
   Package,
   ShoppingBag,
   TrendingUp,
 } from "lucide-react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export default function Me() {
-  const { user, isAuthenticated } = useAuthStore();
+  const router = useRouter();
+  const { user, isAuthenticated, clearAuth } = useAuthStore();
+  const { clearCart } = useOrderStore();
   const { data, isLoading } = useUserById(user?.id as number);
   const details = data?.user;
   const recentOrders = data?.recent_orders || [];
 
-  if (!isAuthenticated) {
-    redirect("/login");
-  }
+  // Handle redirect after all hooks are called
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
+
+  const handleLogout = () => {
+    clearAuth();
+    clearCart();
+    toast.success("Logged out successfully");
+    router.push("/");
+  };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -47,6 +64,11 @@ export default function Me() {
         return "outline";
     }
   };
+
+  // Don't render anything if not authenticated (redirect will happen in useEffect)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   // Loading state
   if (isLoading || !details) {
@@ -148,6 +170,14 @@ export default function Me() {
                     <Calendar className="h-3 w-3" />
                     Joined {new Date(details.created_at).toLocaleDateString()}
                   </div>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="mt-6 w-full border-destructive/50 text-destructive hover:bg-destructive hover:text-white"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
                 </div>
               </CardContent>
             </Card>

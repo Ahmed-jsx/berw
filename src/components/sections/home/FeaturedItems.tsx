@@ -5,6 +5,10 @@ import ItemCard from "@/components/ItemCard";
 import { Button } from "@/components/ui/button";
 import { useProducts } from "@/hooks/useProducts";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { api } from "@/lib/api";
+import { fetchExtras } from "@/lib/fetchers/extras";
 
 // Loading Skeleton Component
 function ProductCardSkeleton() {
@@ -23,12 +27,34 @@ function ProductCardSkeleton() {
 
 const FeaturedItems = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: products, isLoading, error } = useProducts();
 
   // Filter and limit to a maximum of 4 featured items
   const isFeatured = products?.filter((item) => item.is_featured);
   const items = isFeatured?.slice(0, 4) ?? [];
   const ItemsHaveFeatured = items.length > 0;
+
+  // Prefetch individual product data and extras when products are loaded
+  useEffect(() => {
+    if (items.length > 0) {
+      // Prefetch extras once (same for all products)
+      queryClient.prefetchQuery({
+        queryKey: ["extras"],
+        queryFn: fetchExtras,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+      });
+
+      // Prefetch individual product data for each featured item
+      items.forEach((item) => {
+        queryClient.prefetchQuery({
+          queryKey: ["products", item.product_id],
+          queryFn: () => api.products.getById(item.product_id),
+          staleTime: 1000 * 60 * 5, // 5 minutes
+        });
+      });
+    }
+  }, [items, queryClient]);
 
   // Handler for the button click
   const handleShowAllMenu = () => {

@@ -20,13 +20,9 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { ShoppingCart, SquarePlus } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
 
 const data = {
-  user: {
-    name: "admin",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
@@ -62,6 +58,21 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuthStore();
+
+  // Use authenticated user data or fallback to default
+  const userData = user
+    ? {
+        name: user.name || "User",
+        email: user.email || "",
+        avatar: "/avatars/shadcn.jpg",
+      }
+    : {
+        name: "Guest",
+        email: "",
+        avatar: "/avatars/shadcn.jpg",
+      };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -86,7 +97,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* <NavDocuments items={data.documents} /> */}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
     </Sidebar>
   );

@@ -106,8 +106,8 @@ const AboutUsFooter = () => {
   return (
      <section className="bg-secondary px-4 md:px-6 lg:px-0 my-12 py-12 min-h-[500px] max-w-full lg:max-w-[calc(100vw-6rem)] lg:my-8 lg:mx-auto lg:rounded-[40px] overflow-hidden flex items-center justify-center">
       <div className="flex flex-col items-center justify-center text-white gap-6 text-center">
-        <h2 className="text-6xl font-bold text-white">Our Beans Tell Stories</h2>
-       <div className="flex items-center justify-center text-center text-lg md:text-xl lg:text-2xl max-w-6xl flex-col gap-8">
+        <h2 className="lg:text-6xl text-4xl font-bold text-white">Our Beans Tell Stories</h2>
+       <div className="flex items-center justify-center text-center text-base md:text-lg lg:text-xl max-w-6xl flex-col gap-8">
        <p className=" text-white ">
         Our beans tell stories: of the land where they were grown, of the farmers who nurtured them, and of the barista who carefully brings that story to life in your cup. For us, that story matters.        </p>
         <p>We source beans that have distinctive origin, exceptional flavor profiles, and are handled with care from farm to brew. We believe in sourcing coffee thoughtfully beans with character, grown with care, roasted to bring out their best.</p>

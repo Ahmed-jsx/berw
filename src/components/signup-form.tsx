@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Eye, EyeOff, Loader2, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -69,6 +70,7 @@ export function SignUpForm({
 }: React.ComponentProps<"div">) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const router = useRouter();
 
   const registerMutation = useRegister();
 
@@ -99,7 +101,16 @@ export function SignUpForm({
       });
 
       toast.success("Signup successful 🎉");
-      // optional: redirect("/dashboard");
+      
+      // Check for redirect destination stored in sessionStorage
+      const redirectPath = sessionStorage.getItem("redirectAfterAuth");
+      if (redirectPath) {
+        // Clear the redirect value
+        sessionStorage.removeItem("redirectAfterAuth");
+        // Redirect to the stored path (e.g., checkout page)
+        router.push(redirectPath);
+      }
+      // If no redirect is stored, AuthGuard will handle default redirect
     } catch (error: any) {
       toast.error(error?.message || "Signup failed");
     }

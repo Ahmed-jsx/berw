@@ -133,7 +133,9 @@ export function CheckoutSection() {
   // Handle checkout
   const handleCheckout = () => {
     if (!isAuthenticated || !user) {
-      toast.error("Please login to continue");
+      // Store the checkout destination in sessionStorage
+      sessionStorage.setItem("redirectAfterAuth", "/check-out");
+      toast.error("Please sign in to continue");
       router.push("/login");
       return;
     }

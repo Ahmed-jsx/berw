@@ -9,7 +9,6 @@ import { Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useOrderStore } from "@/store/orderStore";
 import { toast } from "sonner";
 import { useMerchants, useOneMerch } from "@/hooks/useMerch";
-import { useAuthStore } from "@/store/auth-store";
 
 interface MerchClientProps {
   id: number;
@@ -19,7 +18,6 @@ export default function MerchClient({ id }: MerchClientProps) {
   const router = useRouter();
   const { addToCart } = useOrderStore();
   const [quantity, setQuantity] = useState(1);
-  const { isAuthenticated } = useAuthStore();
 
   // ✅ ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const { data: merch, isLoading, error } = useOneMerch(id);
@@ -45,10 +43,6 @@ export default function MerchClient({ id }: MerchClientProps) {
   };
 
   const handleAddToCart = () => {
-    if (!isAuthenticated) {
-      toast.error("Please login to add items to your cart");
-      return;
-    }
     if (!merch) return;
 
     addToCart({

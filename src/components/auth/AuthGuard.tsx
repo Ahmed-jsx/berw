@@ -1,10 +1,11 @@
 "use client";
 
 import { useAuthStore } from "@/store/auth-store";
-import { redirect, usePathname } from "next/navigation";
-import React from "react";
+import { useRouter, usePathname } from "next/navigation";
+import React, { useEffect } from "react";
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter();
   const pathname = usePathname();
   const isPublicPath = ["/login", "/sign-up"].includes(pathname);
   const isWebPath = pathname === "/" || pathname.startsWith("/menu") || pathname.startsWith("/merch") || pathname.startsWith("/check-out") || pathname.startsWith("/about-us");
@@ -18,21 +19,34 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Redirect unauthenticated users away from protected routes (dashboard, /me)
-  if (!isAuthenticated && !isPublicPath && !isWebPath) {
-    redirect("/login");
-  }
+  useEffect(() => {
+    if (!isAuthenticated && !isPublicPath && !isWebPath) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, isPublicPath, isWebPath, router]);
 
   // Redirect authenticated users away from public auth routes
-  if (isAuthenticated && isPublicPath) {
-    // Redirect based on role
-    if (role === "admin") {
-      redirect("/dashboard");
-    } else if (role === "cashier") {
-      redirect("/cashier");
-    } else {
-      redirect("/");
+  useEffect(() => {
+    if (isAuthenticated && isPublicPath) {
+      // Check for redirect destination stored in sessionStorage first
+      const redirectPath = sessionStorage.getItem("redirectAfterAuth");
+      if (redirectPath) {
+        // Clear the redirect value
+        sessionStorage.removeItem("redirectAfterAuth");
+        router.push(redirectPath);
+        return;
+      }
+      
+      // If no redirect stored, redirect based on role
+      if (role === "admin") {
+        router.push("/dashboard");
+      } else if (role === "cashier") {
+        router.push("/cashier");
+      } else {
+        router.push("/");
+      }
     }
-  }
+  }, [isAuthenticated, isPublicPath, role, router]);
 
   // Restrict role-based paths
   if (isAuthenticated) {

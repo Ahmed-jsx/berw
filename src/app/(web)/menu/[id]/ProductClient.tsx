@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useExtras, type Extra } from "@/hooks/useExtras";
 import { useProduct } from "@/hooks/useProducts";
-import { useAuthStore } from "@/store/auth-store";
 import { useOrderStore } from "@/store/orderStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Minus, Plus, ShoppingCart, Star } from "lucide-react";
@@ -32,7 +31,6 @@ interface ProductClientProps {
 
 export default function ProductClient({ id }: ProductClientProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
 
   const { data: productResponse, isLoading, error } = useProduct(id);
   const { addToCart } = useOrderStore();
@@ -109,10 +107,6 @@ export default function ProductClient({ id }: ProductClientProps) {
   // Handle form submission
   const onSubmit = (data: OrderFormData) => {
     if (!product) return;
-    if (!isAuthenticated) {
-      toast.error("Please login to add items to your cart");
-      return;
-    }
     
     // Filter extras that have quantity > 0
     const extrasWithQuantity = Object.entries(selectedExtras)

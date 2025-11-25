@@ -90,11 +90,9 @@ const Header = () => {
 
           {/* Right Section - Always visible items */}
           <div className="flex items-center gap-6">
-            {isAuthenticated && (
-              <div className="shrink-0">
-                <CartButton />
-              </div>
-            )}
+            <div className="shrink-0">
+              <CartButton />
+            </div>
 
             {/* Desktop User Menu / Login Button */}
             <div className="hidden sm:flex items-center">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,6 +52,7 @@ interface LoginFormProps extends React.ComponentProps<"div"> {}
 export function LoginForm({ className, ...props }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
@@ -76,7 +78,15 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
 
         toast.success("Welcome back! You've been successfully logged in.");
 
-        // ❌ No redirect here — AuthGuard will handle it
+        // Check for redirect destination stored in sessionStorage
+        const redirectPath = sessionStorage.getItem("redirectAfterAuth");
+        if (redirectPath) {
+          // Clear the redirect value
+          sessionStorage.removeItem("redirectAfterAuth");
+          // Redirect to the stored path (e.g., checkout page)
+          router.push(redirectPath);
+        }
+        // If no redirect is stored, AuthGuard will handle default redirect
       },
       onError: (error) => {
         const errorMessage =

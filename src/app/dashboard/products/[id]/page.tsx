@@ -38,8 +38,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Plus, ArrowLeft } from "lucide-react";
+import { Loader2, Plus, ArrowLeft, X } from "lucide-react";
 import Image from "next/image";
+import ImageUpload from "@/components/image-upload";
 
 const productSchema = z.object({
   product_name: z.string().min(1, "Name is required"),
@@ -68,6 +69,8 @@ export default function EditProductPage() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [hasNewImage, setHasNewImage] = useState(false);
 
   const product = products?.find((p) => String(p.product_id) === id);
 
@@ -92,16 +95,26 @@ export default function EditProductPage() {
 
   // Update form when product data loads
   useEffect(() => {
-    if (product) {
+    if (product && categories && categories.length > 0) {
+      // Find the exact category name that matches the product's category
+      // This ensures the Select component can properly match and display the selected value
+      const productCategory = product.product_category || "";
+      const matchingCategory = categories.find(
+        (cat) => cat.category_name === productCategory
+      );
+      const categoryValue = matchingCategory
+        ? matchingCategory.category_name
+        : productCategory;
+
       form.reset({
         product_name: product.product_name,
-        category: product.product_category || "",
+        category: categoryValue || "",
         price: product.product_price,
         product_components: product.product_components || "",
         is_featured: product.is_featured,
       });
     }
-  }, [product, form]);
+  }, [product, categories, form]);
 
   const handleCreateCategory = async (values: CategoryFormValues) => {
     setIsCreatingCategory(true);
@@ -134,7 +147,8 @@ export default function EditProductPage() {
           price: parseFloat(values.price),
           product_components: values.product_components || "",
           is_featured: values.is_featured,
-        },
+          ...(uploadedImage && { product_photo: uploadedImage }),
+        } as any, // Type assertion needed because API accepts File for product_photo
       },
       {
         onSuccess: () => {
@@ -195,28 +209,77 @@ export default function EditProductPage() {
 
         <Card className="shadow-lg border-0">
           <CardContent className="p-6 md:p-8">
-            {/* Product Image Preview - Fixed: Use regular label instead of FormLabel */}
-            {product.product_photo && (
-              <div className="mb-6">
-                <label className="text-lg font-semibold mb-2 block">
-                  Current Product Image
-                </label>
-                <div className="relative w-full h-48 rounded-lg overflow-hidden border">
-                  <Image
-                    src={product.product_photo}
-                    alt={product.product_name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-            )}
-
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(handleUpdate)}
                 className="space-y-8"
               >
+                {/* Image Upload Section */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-lg font-semibold text-gray-900">
+                      Product Image
+                    </label>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {hasNewImage
+                        ? "New image will replace the current one"
+                        : "Update image (optional - leave unchanged to keep current image)"}
+                    </p>
+                  </div>
+
+                  {/* Current Image Preview */}
+                  {product.product_photo && !hasNewImage && (
+                    <div className="relative w-full max-w-md h-64 rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm bg-gray-50">
+                      <Image
+                        src={product.product_photo}
+                        alt={product.product_name}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="opacity-0 hover:opacity-100 transition-opacity text-white text-sm font-medium">
+                          Current Image
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Image Upload Component */}
+                  <div className="mt-4">
+                    <ImageUpload
+                      maxSize={2 * 1024 * 1024}
+                      onImageChange={(image) => {
+                        if (image && image.status === "completed") {
+                          setUploadedImage(image.file);
+                          setHasNewImage(true);
+                        } else {
+                          setUploadedImage(null);
+                          setHasNewImage(false);
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Cancel Image Update Button */}
+                  {hasNewImage && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setUploadedImage(null);
+                        setHasNewImage(false);
+                      }}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Cancel Image Update
+                    </Button>
+                  )}
+                </div>
+
+                <div className="border-t pt-6"></div>
+
                 {/* Product Details */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <FormField
@@ -243,39 +306,61 @@ export default function EditProductPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Category</FormLabel>
-                        <Select
+                        <Select 
+                          defaultValue={product.product_category || undefined}
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value || undefined}
                           disabled={categoriesLoading}
                         >
                           <FormControl>
                             <SelectTrigger className="h-11">
-                              <SelectValue placeholder="Select a category" />
+                              <SelectValue 
+                                placeholder={
+                                  categoriesLoading 
+                                    ? "Loading categories..." 
+                                    : product.product_category || "Select a category"
+                                }
+                              >
+                                {product.product_category || "Select a category"}
+                              </SelectValue>
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {categories?.map((category) => (
-                              <SelectItem
-                                key={category.category_id}
-                                value={category.category_name}
-                              >
-                                {category.category_name}
-                              </SelectItem>
-                            ))}
-                            <div className="border-t mt-1 pt-1">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                className="w-full justify-start text-teal-600 hover:text-teal-700 hover:bg-teal-50"
-                                onClick={() => setIsDialogOpen(true)}
-                              >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Create New Category
-                              </Button>
-                            </div>
+                            {categories && categories.length > 0 ? (
+                              <>
+                                {categories.map((category) => (
+                                  <SelectItem
+                                    key={category.category_id}
+                                    value={category.category_name}
+                                  >
+                                    {category.category_name}
+                                  </SelectItem>
+                                ))}
+                                <div className="border-t mt-1 pt-1">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="w-full justify-start text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                                    onClick={() => setIsDialogOpen(true)}
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Create New Category
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="p-4 text-center text-sm text-gray-500">
+                                No categories available
+                              </div>
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
+                        {field.value && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Selected: <span className="font-medium">{field.value}</span>
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />

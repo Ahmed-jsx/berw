@@ -1,10 +1,15 @@
 "use client";
-
+import {usePathname} from "next/navigation";
 interface WhatsAppButtonProps {
   phoneNumber?: string;
 }
 
 const WhatsAppButton = ({ phoneNumber: propPhoneNumber }: WhatsAppButtonProps = {}) => {
+  const pathname = usePathname();
+  const isDashboard = pathname.includes("/dashboard");
+  if (isDashboard) {
+    return null;
+  }
   // Get phone number from prop, environment variable, or empty string
   // Priority: prop > environment variable
   // You can set this in your .env.local file as NEXT_PUBLIC_WHATSAPP_PHONE

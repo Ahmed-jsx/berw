@@ -33,7 +33,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       if (redirectPath) {
         // Clear the redirect value
         sessionStorage.removeItem("redirectAfterAuth");
-        router.push(redirectPath);
+        router.push(redirectPath as any);
         return;
       }
       
@@ -49,37 +49,33 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   }, [isAuthenticated, isPublicPath, role, router]);
 
   // Restrict role-based paths
-  if (isAuthenticated) {
-    // Cashier route protection: only cashier and admin can access
-    if (pathname.startsWith("/cashier") && role !== "cashier" && role !== "admin") {
-      redirect("/");
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Cashier route protection: only cashier and admin can access
+      if (pathname.startsWith("/cashier") && role !== "cashier" && role !== "admin") {
+        router.push("/");
+        return;
+      }
+      
+      // Block cashiers from accessing dashboard routes
+      if (role === "cashier" && pathname.startsWith("/dashboard")) {
+        router.push("/cashier");
+        return;
+      }
+      
+      // Regular users cannot access /dashboard, redirect to home
+      if (role === "user" && pathname.startsWith("/dashboard")) {
+        router.push("/");
+        return;
+      }
+      
+      // Regular users cannot access /cashier, redirect to home
+      if (role === "user" && pathname.startsWith("/cashier")) {
+        router.push("/");
+        return;
+      }
     }
-    
-    // Block cashiers from accessing dashboard routes
-    if (role === "cashier" && pathname.startsWith("/dashboard")) {
-      redirect("/cashier");
-    }
-    
-    // Block cashiers from accessing /me routes
-    if (role === "cashier" && pathname.startsWith("/me")) {
-      redirect("/cashier");
-    }
-    
-    // Admin cannot access /me, redirect to dashboard
-    if (role === "admin" && pathname.startsWith("/me")) {
-      redirect("/dashboard");
-    }
-    
-    // Regular users cannot access /dashboard, redirect to home
-    if (role === "user" && pathname.startsWith("/dashboard")) {
-      redirect("/");
-    }
-    
-    // Regular users cannot access /cashier, redirect to home
-    if (role === "user" && pathname.startsWith("/cashier")) {
-      redirect("/");
-    }
-  }
+  }, [isAuthenticated, role, pathname, router]);
 
   return <>{children}</>;
 };

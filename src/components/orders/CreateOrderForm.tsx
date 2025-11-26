@@ -26,6 +26,7 @@ import { useExtras, type Extra } from "@/hooks/useExtras";
 import { useCheckoutOrder } from "@/hooks/useOrderQueries";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth-store";
 import { Plus, Minus, X, Check, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -53,10 +54,13 @@ interface OrderItem {
 
 export default function CreateOrderForm() {
   const router = useRouter();
+  const role = useAuthStore((s) => s.role);
   const { data: usersData, isLoading: usersLoading, error: usersError } = useUsers();
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: extras, isLoading: extrasLoading } = useExtras();
   const checkoutMutation = useCheckoutOrder();
+
+  
 
 
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
@@ -270,7 +274,13 @@ export default function CreateOrderForm() {
     try {
       const result = await checkoutMutation.mutateAsync(checkoutData);
       toast.success(`Order created successfully! Order Code: ${result.order_code}`);
-      router.push("/dashboard/orders");
+      
+      // Redirect based on user role
+      if (role === "cashier") {
+        router.push("/cashier/orders");
+      } else {
+        router.push("/dashboard/orders");
+      }
     } catch (error: any) {
       toast.error(error?.message || "Failed to create order");
     }

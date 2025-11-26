@@ -34,7 +34,8 @@ export default function Me() {
   const router = useRouter();
   const { user, isAuthenticated, clearAuth } = useAuthStore();
   const { clearCart } = useOrderStore();
-  const { data, isLoading } = useUserById(user?.id as number);
+  const userId = user?.id;
+  const { data, isLoading, error } = useUserById(userId || 0);
   const details = data?.user;
   const recentOrders = data?.recent_orders || [];
 
@@ -44,6 +45,20 @@ export default function Me() {
       router.push("/login");
     }
   }, [isAuthenticated, router]);
+
+  // Handle error state
+  if (error && userId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Failed to load user data</p>
+          <Button onClick={() => router.push("/")} variant="outline">
+            Go Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleLogout = () => {
     clearAuth();
@@ -67,6 +82,11 @@ export default function Me() {
 
   // Don't render anything if not authenticated (redirect will happen in useEffect)
   if (!isAuthenticated) {
+    return null;
+  }
+
+  // Don't render if user ID is not available yet (hydration)
+  if (!userId) {
     return null;
   }
 

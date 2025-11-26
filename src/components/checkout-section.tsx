@@ -25,6 +25,7 @@ import { useAuthStore } from "@/store/auth-store";
 export function CheckoutSection() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const {
     cartItems,
     updateCartItemQuantity,
@@ -64,14 +65,19 @@ export function CheckoutSection() {
         })
       );
 
-      // Clear cart after successful order
-      clearCart();
-      
       toast.success("Order placed successfully!");
       reset();
       
+      // Set redirecting flag to prevent showing empty cart
+      setIsRedirecting(true);
+      
       // Redirect to thank-you page
       router.push("/thank-you");
+      
+      // Clear cart after redirect is initiated (with a small delay to ensure redirect happens first)
+      setTimeout(() => {
+        clearCart();
+      }, 100);
     }
   }, [isSuccess, checkoutData, reset, clearCart, router]);
 
@@ -149,8 +155,8 @@ export function CheckoutSection() {
     checkout(payload.user_id, payload.items);
   };
 
-  // Empty cart state
-  if (cartItems.length === 0) {
+  // Empty cart state - but don't show if we're redirecting after successful checkout
+  if (cartItems.length === 0 && !isRedirecting) {
     return (
       <div className="min-h-screen max-w-[calc(100vw-6rem)] my-8 mx-auto rounded-[40px] bg-secondary p-6 pt-40">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">

@@ -4,8 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
@@ -27,8 +29,10 @@ import { useCheckoutOrder } from "@/hooks/useOrderQueries";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
-import { Plus, Minus, X, Check, Loader2 } from "lucide-react";
+import { Plus, Minus, X, Check, Loader2, Search, ShoppingCart, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 // Form schema
 const createOrderSchema = z.object({
@@ -38,7 +42,7 @@ const createOrderSchema = z.object({
       z.object({
         product_id: z.number(),
         quantity: z.number().min(1),
-        extras: z.array(z.number()),
+        extras: z.record(z.number(), z.number()), // Map of extra ID to quantity
       })
     )
     .min(1, "Please add at least one product"),
@@ -49,7 +53,7 @@ type CreateOrderFormData = z.infer<typeof createOrderSchema>;
 interface OrderItem {
   product_id: number;
   quantity: number;
-  extras: number[];
+  extras: { [extraId: number]: number }; // Map of extra ID to quantity
 }
 
 export default function CreateOrderForm() {
@@ -60,15 +64,13 @@ export default function CreateOrderForm() {
   const { data: extras, isLoading: extrasLoading } = useExtras();
   const checkoutMutation = useCheckoutOrder();
 
-  
-
-
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [openCustomerPopover, setOpenCustomerPopover] = useState(false);
-  const [openProductPopover, setOpenProductPopover] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
 
   const {
     handleSubmit,
@@ -92,6 +94,18 @@ export default function CreateOrderForm() {
     }
   }, [orderItems, setValue, trigger]);
 
+  // Get unique categories
+  const categories = useMemo(() => {
+    if (!products) return [];
+    const categorySet = new Set<string>();
+    products.forEach((p) => {
+      if (p.product_category) {
+        categorySet.add(p.product_category);
+      }
+    });
+    return Array.from(categorySet).sort();
+  }, [products]);
+
   // Filter customers based on search
   const filteredCustomers = useMemo(() => {
     if (!usersData?.users) return [];
@@ -112,24 +126,28 @@ export default function CreateOrderForm() {
     );
   }, [usersData?.users, customerSearch]);
 
-  // Filter products based on search
+  // Filter products based on search and category
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    if (!productSearch.trim()) return products;
-    const searchLower = productSearch.toLowerCase();
-    return products.filter(
-      (product) =>
-        product.product_name?.toLowerCase().includes(searchLower) ||
-        product.product_category?.toLowerCase().includes(searchLower)
-    );
-  }, [products, productSearch]);
+    let filtered = products;
 
-  // Get available products (not already added)
-  const availableProducts = useMemo(() => {
-    if (!products) return [];
-    const addedProductIds = new Set(orderItems.map((item) => item.product_id));
-    return products.filter((p) => !addedProductIds.has(p.product_id));
-  }, [products, orderItems]);
+    // Filter by category
+    if (selectedCategory) {
+      filtered = filtered.filter((p) => p.product_category === selectedCategory);
+    }
+
+    // Filter by search
+    if (productSearch.trim()) {
+      const searchLower = productSearch.toLowerCase();
+      filtered = filtered.filter(
+        (product) =>
+          product.product_name?.toLowerCase().includes(searchLower) ||
+          product.product_category?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return filtered;
+  }, [products, selectedCategory, productSearch]);
 
   // Calculate total price
   const totalPrice = useMemo(() => {
@@ -138,10 +156,10 @@ export default function CreateOrderForm() {
       const product = products.find((p) => p.product_id === item.product_id);
       if (!product) return total;
       const productPrice = parseFloat(product.product_price) * item.quantity;
-      // Extras are NOT multiplied by quantity (same as menu page)
-      const extrasPrice = item.extras.reduce((sum, extraId) => {
-        const extra = extras.find((e) => e.id === extraId);
-        return sum + (extra ? extra.price : 0);
+      // Extras price = sum of (extra price * extra quantity)
+      const extrasPrice = Object.entries(item.extras).reduce((sum, [extraId, quantity]) => {
+        const extra = extras.find((e) => e.id === Number(extraId));
+        return sum + (extra ? extra.price * quantity : 0);
       }, 0);
       return total + productPrice + extrasPrice;
     }, 0);
@@ -161,21 +179,41 @@ export default function CreateOrderForm() {
       return;
     }
 
-    const newItem = {
-      product_id: productId,
-      quantity: 1,
-      extras: [],
-    };
-
-    setOrderItems((prev) => [...prev, newItem]);
-    setOpenProductPopover(false);
-    setProductSearch("");
-    toast.success(`${product.product_name} added to order`);
+    // Check if product already exists in order
+    const existingIndex = orderItems.findIndex((item) => item.product_id === productId);
+    
+    if (existingIndex >= 0) {
+      // Increment quantity if product already exists
+      setOrderItems((prev) =>
+        prev.map((item, i) => {
+          if (i === existingIndex) {
+            return {
+              ...item,
+              quantity: item.quantity + 1,
+            };
+          }
+          return item;
+        })
+      );
+      toast.success(`${product.product_name} quantity increased`);
+    } else {
+      // Add new product
+      const newItem = {
+        product_id: productId,
+        quantity: 1,
+        extras: {},
+      };
+      setOrderItems((prev) => [...prev, newItem]);
+      toast.success(`${product.product_name} added to order`);
+    }
   };
 
   // Remove product from order
   const handleRemoveProduct = (index: number) => {
     setOrderItems((prev) => prev.filter((_, i) => i !== index));
+    if (editingItemIndex === index) {
+      setEditingItemIndex(null);
+    }
   };
 
   // Update product quantity
@@ -194,18 +232,79 @@ export default function CreateOrderForm() {
     );
   };
 
-  // Toggle extra for a product
-  const handleToggleExtra = (itemIndex: number, extraId: number) => {
+  // Add extra to a product (or increment quantity)
+  const handleAddExtra = (itemIndex: number, extraId: number) => {
     setOrderItems((prev) =>
       prev.map((item, i) => {
         if (i === itemIndex) {
-          const hasExtra = item.extras.includes(extraId);
+          const currentQuantity = item.extras[extraId] || 0;
           return {
             ...item,
-            extras: hasExtra
-              ? item.extras.filter((id) => id !== extraId)
-              : [...item.extras, extraId],
+            extras: {
+              ...item.extras,
+              [extraId]: currentQuantity + 1,
+            },
           };
+        }
+        return item;
+      })
+    );
+  };
+
+  // Remove extra from a product (or decrement quantity)
+  const handleRemoveExtra = (itemIndex: number, extraId: number) => {
+    setOrderItems((prev) =>
+      prev.map((item, i) => {
+        if (i === itemIndex) {
+          const currentQuantity = item.extras[extraId] || 0;
+          if (currentQuantity <= 1) {
+            // Remove extra if quantity is 1 or less
+            const { [extraId]: _, ...restExtras } = item.extras;
+            return {
+              ...item,
+              extras: restExtras,
+            };
+          } else {
+            // Decrement quantity
+            return {
+              ...item,
+              extras: {
+                ...item.extras,
+                [extraId]: currentQuantity - 1,
+              },
+            };
+          }
+        }
+        return item;
+      })
+    );
+  };
+
+  // Update extra quantity
+  const handleExtraQuantityChange = (itemIndex: number, extraId: number, change: number) => {
+    setOrderItems((prev) =>
+      prev.map((item, i) => {
+        if (i === itemIndex) {
+          const currentQuantity = item.extras[extraId] || 0;
+          const newQuantity = currentQuantity + change;
+          
+          if (newQuantity <= 0) {
+            // Remove extra if quantity is 0 or less
+            const { [extraId]: _, ...restExtras } = item.extras;
+            return {
+              ...item,
+              extras: restExtras,
+            };
+          } else {
+            // Update quantity
+            return {
+              ...item,
+              extras: {
+                ...item.extras,
+                [extraId]: newQuantity,
+              },
+            };
+          }
         }
         return item;
       })
@@ -227,10 +326,10 @@ export default function CreateOrderForm() {
     const product = getProductDetails(item.product_id);
     if (!product) return 0;
     const productPrice = parseFloat(product.product_price) * item.quantity;
-    // Extras are NOT multiplied by quantity (same as menu page)
-    const extrasPrice = item.extras.reduce((sum, extraId) => {
-      const extra = getExtraDetails(extraId);
-      return sum + (extra ? extra.price : 0);
+    // Extras price = sum of (extra price * extra quantity)
+    const extrasPrice = Object.entries(item.extras).reduce((sum, [extraId, quantity]) => {
+      const extra = getExtraDetails(Number(extraId));
+      return sum + (extra ? extra.price * quantity : 0);
     }, 0);
     return productPrice + extrasPrice;
   };
@@ -261,14 +360,25 @@ export default function CreateOrderForm() {
     }
 
     // Format checkout payload to match the checkout process structure
+    // Convert extras map to array format (repeat IDs based on quantity)
     const checkoutData = {
       user_id: selectedUserId,
-      items: orderItems.map((item) => ({
-        type: "product" as const,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        extras: item.extras || [],
-      })),
+      items: orderItems.map((item) => {
+        const extrasArray: number[] = [];
+        if (item.extras) {
+          Object.entries(item.extras).forEach(([id, quantity]) => {
+            for (let i = 0; i < quantity; i++) {
+              extrasArray.push(Number(id));
+            }
+          });
+        }
+        return {
+          type: "product" as const,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          extras: extrasArray,
+        };
+      }),
     };
 
     try {
@@ -286,318 +396,449 @@ export default function CreateOrderForm() {
     }
   };
 
+  // Get item quantity in cart for a product
+  const getProductQuantityInCart = (productId: number) => {
+    const item = orderItems.find((item) => item.product_id === productId);
+    return item ? item.quantity : 0;
+  };
+
+  if (productsLoading || extrasLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Customer Selection */}
-      <div className="space-y-2">
-        <Label htmlFor="customer">Customer *</Label>
-        {usersError && (
-          <p className="text-sm text-red-500">
-            Error loading customers: {usersError.message}
-          </p>
-        )}
-        <Popover open={openCustomerPopover} onOpenChange={setOpenCustomerPopover}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              className="w-full justify-between"
-              disabled={usersLoading}
-            >
-              {usersLoading
-                ? "Loading customers..."
-                : selectedCustomer
-                ? `${selectedCustomer.name || selectedCustomer.user_name} (${selectedCustomer.email || selectedCustomer.user_email})`
-                : "Select customer..."}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[400px] p-0" align="start">
-            <Command>
-              <CommandInput
-                placeholder="Search customers..."
-                value={customerSearch}
-                onValueChange={setCustomerSearch}
-              />
-              <CommandList>
-                <CommandEmpty>
+      {/* Customer Selection - Compact Header */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <User className="h-4 w-4" />
+              <span>Customer:</span>
+            </div>
+            <Popover open={openCustomerPopover} onOpenChange={setOpenCustomerPopover}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="flex-1 justify-between max-w-md"
+                  disabled={usersLoading}
+                >
                   {usersLoading
-                    ? "Loading..."
-                    : filteredCustomers.length === 0
-                    ? "No customers found."
-                    : "No results found."}
-                </CommandEmpty>
-                {filteredCustomers.length > 0 && (
-                  <CommandGroup>
-                    {filteredCustomers.map((user: any) => (
-                      <CommandItem
-                        key={user.id}
-                        value={`${user.name || user.user_name} ${user.email || user.user_email} ${user.number || user.user_number}`}
-                        onSelect={() => {
-                          setSelectedUserId(user.id);
-                          setValue("user_id", user.id);
-                          setOpenCustomerPopover(false);
-                          setCustomerSearch("");
-                        }}
-                      >
-                        <Check
-                          className={`mr-2 h-4 w-4 ${
-                            selectedUserId === user.id ? "opacity-100" : "opacity-0"
-                          }`}
-                        />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{user.name || user.user_name}</span>
-                          <span className="text-sm text-muted-foreground">
-                            {user.email || user.user_email} • {user.number || user.user_number}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-        {errors.user_id && (
-          <p className="text-sm text-red-500">{errors.user_id.message}</p>
-        )}
-      </div>
-
-      {/* Add Product */}
-      <div className="space-y-2">
-        <Label>Products *</Label>
-        <Popover open={openProductPopover} onOpenChange={setOpenProductPopover}>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-start"
-              disabled={productsLoading}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {productsLoading ? "Loading products..." : "Add Product"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[400px] p-0" align="start">
-            <Command>
-              <CommandInput
-                placeholder="Search products..."
-                value={productSearch}
-                onValueChange={setProductSearch}
-              />
-              <CommandList>
-                <CommandEmpty>
-                  {productsLoading
-                    ? "Loading products..."
-                    : availableProducts.length === 0
-                    ? orderItems.length > 0
-                      ? "All available products have been added"
-                      : "No products available"
-                    : "No products found."}
-                </CommandEmpty>
-                {(() => {
-                  const productsToShow = productSearch.trim()
-                    ? filteredProducts.filter((p) =>
-                        availableProducts.some((ap) => ap.product_id === p.product_id)
-                      )
-                    : availableProducts;
-
-                  return productsToShow.length > 0 ? (
-                    <CommandGroup>
-                      {productsToShow.map((product) => (
-                        <CommandItem
-                          key={product.product_id}
-                          value={product.product_name}
-                          onSelect={() => handleAddProduct(product.product_id)}
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {product.product_name}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              {product.product_category} •{" "}
-                              {parseFloat(product.product_price).toFixed(2)} EGP
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : null;
-                })()}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-        {orderItems.length === 0 && (
-          <p className="text-sm text-amber-600">
-            Please add at least one product to create an order
-          </p>
-        )}
-        {errors.items && (
-          <p className="text-sm text-red-500">{errors.items.message}</p>
-        )}
-      </div>
-
-      {/* Order Items */}
-      {orderItems.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>Order Items ({orderItems.length})</Label>
-            <span className="text-sm text-muted-foreground">
-              {orderItems.length} {orderItems.length === 1 ? "item" : "items"} added
-            </span>
+                    ? "Loading customers..."
+                    : selectedCustomer
+                    ? `${selectedCustomer.name || selectedCustomer.user_name} (${selectedCustomer.email || selectedCustomer.user_email})`
+                    : "Select customer..."}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Search customers..."
+                    value={customerSearch}
+                    onValueChange={setCustomerSearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>
+                      {usersLoading
+                        ? "Loading..."
+                        : filteredCustomers.length === 0
+                        ? "No customers found."
+                        : "No results found."}
+                    </CommandEmpty>
+                    {filteredCustomers.length > 0 && (
+                      <CommandGroup>
+                        {filteredCustomers.map((user: any) => (
+                          <CommandItem
+                            key={user.id}
+                            value={`${user.name || user.user_name} ${user.email || user.user_email} ${user.number || user.user_number}`}
+                            onSelect={() => {
+                              setSelectedUserId(user.id);
+                              setValue("user_id", user.id);
+                              setOpenCustomerPopover(false);
+                              setCustomerSearch("");
+                            }}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${
+                                selectedUserId === user.id ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+                            <div className="flex flex-col">
+                              <span className="font-medium">{user.name || user.user_name}</span>
+                              <span className="text-sm text-muted-foreground">
+                                {user.email || user.user_email} • {user.number || user.user_number}
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {errors.user_id && (
+              <p className="text-sm text-red-500">{errors.user_id.message}</p>
+            )}
+            {selectedCustomer && (
+              <Badge variant="secondary" className="ml-auto">
+                {orderItems.length} {orderItems.length === 1 ? "item" : "items"}
+              </Badge>
+            )}
           </div>
-          <div className="space-y-3">
-            {orderItems.map((item, index) => {
-              const product = getProductDetails(item.product_id);
-              if (!product) return null;
+        </CardContent>
+      </Card>
+
+      {/* Main Content - Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Products (2/3 width) */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Search and Category Filter */}
+          <Card>
+            <CardContent className="p-4 ">
+              <div className="flex flex-col  gap-4">
+                {/* Search */}
+                <div className="relative  flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search products..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                {/* Category Filter */}
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  <Button
+                    type="button"
+                    variant={selectedCategory === null ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(null)}
+                  >
+                    All
+                  </Button>
+                  {categories.map((category) => (
+                    <Button
+                      key={category}
+                      type="button"
+                      variant={selectedCategory === category ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedCategory(category)}
+                    >
+                      {category}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Products Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {filteredProducts.map((product) => {
+              const quantityInCart = getProductQuantityInCart(product.product_id);
+              const imageSrc = product.product_photo && product.product_photo.trim() !== ""
+                ? product.product_photo
+                : "/bg1.png";
 
               return (
-                <Card key={index}>
-                  <CardContent className="p-4">
-                    <div className="space-y-4">
-                      {/* Product Header */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{product.product_name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {product.product_category} •{" "}
-                            {parseFloat(product.product_price).toFixed(2)} EGP
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveProduct(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-3">
-                        <Label className="text-sm">Quantity:</Label>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleQuantityChange(index, -1)}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="w-12 text-center font-medium">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleQuantityChange(index, 1)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Extras Selection */}
-                      {extras && extras.length > 0 && (
-                        <div className="space-y-2">
-                          <Label className="text-sm">Extras:</Label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {extras.map((extra) => (
-                              <div
-                                key={extra.id}
-                                className="flex items-center space-x-2"
-                              >
-                                <Checkbox
-                                  id={`extra-${index}-${extra.id}`}
-                                  checked={item.extras.includes(extra.id)}
-                                  onCheckedChange={(checked) =>
-                                    handleToggleExtra(index, extra.id)
-                                  }
-                                />
-                                <Label
-                                  htmlFor={`extra-${index}-${extra.id}`}
-                                  className="text-sm font-normal cursor-pointer flex-1"
-                                >
-                                  {extra.name} (+{extra.price.toFixed(2)} EGP)
-                                </Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Item Total */}
-                      <div className="flex justify-end pt-2 border-t">
-                        <span className="font-semibold">
-                          Item Total: {getItemTotal(item).toFixed(2)} EGP
-                        </span>
-                      </div>
-                    </div>
+                <Card
+                  key={product.product_id}
+                  className="overflow-hidden p-0 hover:shadow-lg transition-shadow cursor-pointer group"
+                >
+                  <div className="relative aspect-square">
+                    <Image
+                      src={imageSrc}
+                      alt={product.product_name}
+                      fill
+                      className="object-cover"
+                    />
+                    {quantityInCart > 0 && (
+                      <Badge className="absolute top-2 right-2 bg-primary">
+                        {quantityInCart}
+                      </Badge>
+                    )}
+                  </div>
+                  <CardContent className="p-3">
+                    <h4 className="font-semibold text-sm mb-1 line-clamp-1">
+                      {product.product_name}
+                    </h4>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {parseFloat(product.product_price).toFixed(2)} EGP
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => handleAddProduct(product.product_id)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      {quantityInCart > 0 ? "Add More" : "Add"}
+                    </Button>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
-        </div>
-      )}
 
-      {/* Order Summary */}
-      {orderItems.length > 0 && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold">Total:</span>
-              <span className="text-2xl font-bold">
-                {totalPrice.toFixed(2)} EGP
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Submit Button */}
-      <div className="flex gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          className="flex-1"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={
-            !selectedUserId ||
-            orderItems.length === 0 ||
-            checkoutMutation.isPending
-          }
-          className="flex-1"
-        >
-          {checkoutMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            "Create Order"
+          {filteredProducts.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">
+                  {productSearch || selectedCategory
+                    ? "No products found matching your filters."
+                    : "No products available."}
+                </p>
+              </CardContent>
+            </Card>
           )}
-        </Button>
+        </div>
+
+        {/* Right Column - Order Summary (1/3 width) */}
+        <div className="lg:col-span-1">
+          <Card className="sticky top-6">
+            <CardContent className="p-0">
+              <div className="p-4 border-b flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                <h3 className="font-semibold">Order Summary</h3>
+                {orderItems.length > 0 && (
+                  <Badge variant="secondary" className="ml-auto">
+                    {orderItems.length}
+                  </Badge>
+                )}
+              </div>
+
+              <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
+                {orderItems.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No items in order</p>
+                    <p className="text-xs mt-1">Add products to get started</p>
+                  </div>
+                ) : (
+                  <div className="p-4 space-y-3">
+                    {orderItems.map((item, index) => {
+                      const product = getProductDetails(item.product_id);
+                      if (!product) return null;
+
+                      const isEditing = editingItemIndex === index;
+
+                      return (
+                        <Card key={index} className="overflow-hidden">
+                          <CardContent className="p-3">
+                            <div className="space-y-3">
+                              {/* Product Header */}
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-sm line-clamp-1">
+                                    {product.product_name}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground">
+                                    {parseFloat(product.product_price).toFixed(2)} EGP each
+                                  </p>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 flex-shrink-0"
+                                  onClick={() => handleRemoveProduct(index)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+
+                              {/* Quantity Controls */}
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Quantity:</span>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => handleQuantityChange(index, -1)}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="w-8 text-center text-sm font-medium">
+                                    {item.quantity}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => handleQuantityChange(index, 1)}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Extras - Collapsible */}
+                              {extras && extras.length > 0 && (
+                                <div className="space-y-2">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-between h-7 text-xs"
+                                    onClick={() => setEditingItemIndex(isEditing ? null : index)}
+                                  >
+                                    <span>Extras</span>
+                                    <span className="text-muted-foreground">
+                                      {Object.keys(item.extras).length > 0
+                                        ? `${Object.values(item.extras).reduce((a, b) => a + b, 0)} selected`
+                                        : "None"}
+                                    </span>
+                                  </Button>
+                                  {isEditing && (
+                                    <div className="space-y-1 pl-2 border-l-2">
+                                      {extras.map((extra) => {
+                                        const extraQuantity = item.extras[extra.id] || 0;
+                                        const hasExtra = extraQuantity > 0;
+                                        
+                                        return (
+                                          <div
+                                            key={extra.id}
+                                            className="flex items-center justify-between py-1"
+                                          >
+                                            <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                              <Checkbox
+                                                id={`extra-${index}-${extra.id}`}
+                                                checked={hasExtra}
+                                                onCheckedChange={(checked) => {
+                                                  if (checked) {
+                                                    handleAddExtra(index, extra.id);
+                                                  } else {
+                                                    handleRemoveExtra(index, extra.id);
+                                                  }
+                                                }}
+                                                className="h-3 w-3"
+                                              />
+                                              <Label
+                                                htmlFor={`extra-${index}-${extra.id}`}
+                                                className="text-xs font-normal cursor-pointer flex-1 truncate"
+                                              >
+                                                {extra.name}
+                                              </Label>
+                                            </div>
+                                            {hasExtra && (
+                                              <div className="flex items-center gap-1 ml-2">
+                                                <Button
+                                                  type="button"
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  className="h-5 w-5"
+                                                  onClick={() => handleExtraQuantityChange(index, extra.id, -1)}
+                                                >
+                                                  <Minus className="h-2.5 w-2.5" />
+                                                </Button>
+                                                <span className="w-6 text-center text-xs font-medium">
+                                                  {extraQuantity}
+                                                </span>
+                                                <Button
+                                                  type="button"
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  className="h-5 w-5"
+                                                  onClick={() => handleExtraQuantityChange(index, extra.id, 1)}
+                                                >
+                                                  <Plus className="h-2.5 w-2.5" />
+                                                </Button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Item Total */}
+                              <div className="flex justify-between items-center pt-2 border-t">
+                                <span className="text-xs text-muted-foreground">Item Total:</span>
+                                <span className="text-sm font-semibold">
+                                  {getItemTotal(item).toFixed(2)} EGP
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Order Total and Actions */}
+              {orderItems.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="p-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold">Total:</span>
+                      <span className="text-2xl font-bold text-primary">
+                        {totalPrice.toFixed(2)} EGP
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setOrderItems([]);
+                          setEditingItemIndex(null);
+                        }}
+                        className="flex-1"
+                        disabled={orderItems.length === 0}
+                      >
+                        Clear
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={
+                          !selectedUserId ||
+                          orderItems.length === 0 ||
+                          checkoutMutation.isPending
+                        }
+                        className="flex-1"
+                      >
+                        {checkoutMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          "Create Order"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Global form errors */}
       {errors.items && orderItems.length === 0 && (
-        <div className="p-3 rounded-md bg-red-50 border border-red-200">
-          <p className="text-sm text-red-600 font-medium">
-            {errors.items.message}
-          </p>
-        </div>
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-3">
+            <p className="text-sm text-red-600 font-medium">
+              {errors.items.message}
+            </p>
+          </CardContent>
+        </Card>
       )}
     </form>
   );
 }
-

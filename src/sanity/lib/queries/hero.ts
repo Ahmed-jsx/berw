@@ -14,6 +14,7 @@ export interface HeroSlide {
     _type: 'image'
   }
   buttonText: string
+  buttonLink: string
   order: number
 }
 
@@ -35,6 +36,7 @@ export const HERO_SECTION_QUERY = `*[_type == "heroSection"][0] {
     description,
     image,
     buttonText,
+    buttonLink,
     order
   } | order(order asc)
 }`

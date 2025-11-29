@@ -40,9 +40,17 @@ export const heroSlide = defineType({
     defineField({
       name: 'buttonLink',
       title: 'Button Link',
-      type: 'url',
-      description: 'Link for the call-to-action button',
-      validation: (Rule) => Rule.required().uri({ allowRelative: true }),
+      type: 'string',
+      description: 'Link for the call-to-action button (e.g., /menu or /menu?q=latte)',
+      validation: (Rule) => Rule.required().custom((value) => {
+        if (!value) return 'Button link is required';
+        // Allow relative paths starting with / or full URLs
+        if (typeof value === 'string' && (value.startsWith('/') || value.startsWith('http'))) {
+          return true;
+        }
+        return 'Link must start with / or http';
+      }),
+      initialValue: '/menu',
     }),
     defineField({
       name: 'order',

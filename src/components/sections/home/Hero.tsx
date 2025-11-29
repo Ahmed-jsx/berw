@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
+import type { Route } from "next";
 import { useHeroData } from "@/hooks/useHeroData";
 import { urlFor } from "@/sanity/lib/image";
 
@@ -44,7 +45,13 @@ export default function Hero() {
   const [isPaused, setIsPaused] = useState(false);
 
   // Use Sanity data if available, otherwise use fallback
-  const slides = heroData?.slides?.length
+  const slides: Array<{
+    image: string;
+    title: string;
+    description: string;
+    buttonText: string;
+    buttonLink: string;
+  }> = heroData?.slides?.length
     ? heroData.slides.map((slide) => {
         let imageUrl = "/bg1.png";
         try {
@@ -66,7 +73,7 @@ export default function Hero() {
           title: slide.title || "Welcome",
           description: slide.description || "",
           buttonText: slide.buttonText || "Order Now",
-          buttonLink: slide.buttonLink || "/menu",
+          buttonLink: (slide.buttonLink || "/menu") as string,
         };
       })
     : fallbackSlides;
@@ -204,16 +211,16 @@ export default function Hero() {
                 </p>
 
                 {/* CTA Button */}
-                <Link href={slides[currentSlide].buttonLink || "/menu"}>
-                  <div className="pt-4">
+                <div className="pt-4">
+                  <Link href={(slides[currentSlide].buttonLink || "/menu") as Route}>
                     <Button
                       size="lg"
                       className="bg-primary hover:bg-primary/80  shadow-primary text-black px-12 py-4 rounded-full text-lg font-semibold shadow-[0_0_10px_#FFD700]"
                     >
                       {slides[currentSlide].buttonText}
                     </Button>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               </motion.div>
             </AnimatePresence>
 

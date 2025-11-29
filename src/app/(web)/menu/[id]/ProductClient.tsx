@@ -407,7 +407,8 @@ export default function ProductClient({ id }: ProductClientProps) {
               Any extras?
             </h2>
           </div>
-          <div className="lg:col-span-4">
+          {/* Share title - hidden on mobile, shown on desktop */}
+          <div className="hidden lg:block  lg:col-span-4">
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
               Share this product
             </h2>
@@ -503,8 +504,14 @@ export default function ProductClient({ id }: ProductClientProps) {
           </div>
 
           {/* Second Column - Share Buttons */}
-          <div className="lg:col-span-4">
-            <Card className="p-4 sm:p-5 justify-center  row-span-2 h-full lg:p-6 bg-primary/10 backdrop-blur-lg border border-primary/20 hover:shadow-md transition-shadow">
+          <div className="lg:col-span-4 py-12 lg:py-0 h-full space-y-4 sm:space-y-6">
+            {/* Share title - shown on mobile, hidden on desktop */}
+            <div className="lg:hidden">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+                Share this product
+              </h2>
+            </div>
+            <Card className="p-4 sm:p-5 h-full justify-center row-span-2 lg:p-6 bg-primary/10 backdrop-blur-lg border border-primary/20 hover:shadow-md transition-shadow">
               <ShareButtons
                 productId={product.product_id}
                 productName={product.product_name}

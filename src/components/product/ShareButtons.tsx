@@ -52,7 +52,7 @@ export default function ShareButtons({
   };
 
   return (
-    <div className={`flex flex-col gap-3 ${className}`}>
+    <div className={`flex flex-col  gap-3 ${className}`}>
       {/* WhatsApp */}
       <Button
         variant="outline"

@@ -290,11 +290,11 @@ const MenuPage = () => {
           </div>
         ) : searchQuery && groupedProducts ? (
           // ✅ Categorized Search Results
-          <div className="space-y-10">
+          <div className="space-y-10 ">
             {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
               <div key={category} className="space-y-4">
                 {/* Category Header */}
-                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                <div className="flex items-center flex-col lg:flex-row gap-2 lg:gap-0 justify-between border-b border-gray-200 pb-3">
                   <h3 className="text-2xl font-bold text-secondary">
                     {category}
                     <span className="text-base font-normal text-muted-foreground ml-2">
@@ -308,7 +308,7 @@ const MenuPage = () => {
                       setSelectedCategory(category);
                       setSearchQuery("");
                     }}
-                    className="text-secondary border-secondary hover:bg-secondary hover:text-white"
+                    className="text-secondary  border-secondary hover:bg-secondary hover:text-white"
                   >
                     View all in {category}
                   </Button>

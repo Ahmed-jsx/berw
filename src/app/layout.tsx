@@ -5,6 +5,7 @@ import Providers from "../providers/provider";
 import "./globals.css";
 import { redirect } from "next/navigation";
 import WhatsAppButton from "@/components/global/WhatsAppButton";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -24,11 +25,13 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning lang="en">
       <body className={`${montserrat.className} antialiased flex flex-col `}>
-        <Providers>
-          <main className="flex-1 min-h-full">{children}</main>
-          <WhatsAppButton />
-          <Toaster position="bottom-right" richColors />
-        </Providers>
+        <NuqsAdapter>
+          <Providers>
+            <main className="flex-1 min-h-full">{children}</main>
+            <WhatsAppButton />
+            <Toaster position="bottom-right" richColors />
+          </Providers>
+        </NuqsAdapter>
       </body>
     </html>
   );

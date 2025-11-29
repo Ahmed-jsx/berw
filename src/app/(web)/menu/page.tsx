@@ -9,6 +9,7 @@ import {
   List,
   X,
 } from "lucide-react";
+import { useQueryStates, parseAsString, parseAsStringLiteral } from "nuqs";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,13 +27,34 @@ import ItemCardList from "@/components/ItemCardList";
 import ItemBadge from "@/components/ItemBadge";
 import { useProducts } from "@/hooks/useProducts";
 
+// Define the valid sort options and view modes
+const sortOptions = ["name", "price-low", "price-high"] as const;
+const viewModes = ["grid", "list"] as const;
+
 const MenuPage = () => {
   const { data: products, isLoading, error } = useProducts();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState("name");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  // ✅ Replace useState with nuqs - syncs with URL
+  const [params, setParams] = useQueryStates(
+    {
+      q: parseAsString.withDefault(""),
+      category: parseAsString,
+      sort: parseAsStringLiteral(sortOptions).withDefault("name"),
+      view: parseAsStringLiteral(viewModes).withDefault("grid"),
+    },
+    {
+      history: "push",
+      shallow: false,
+    }
+  );
+
+  // Extract values from params
+  const searchQuery = params.q;
+  const selectedCategory = params.category;
+  const sortBy = params.sort;
+  const viewMode = params.view;
+
+  // ✅ Keep visibleCount as local state (no need in URL)
   const [visibleCount, setVisibleCount] = useState(12);
 
   // ✅ Safe unique category extraction (ignore null)
@@ -44,12 +66,12 @@ const MenuPage = () => {
     return [...new Set(valid)];
   }, [products]);
 
-  // ✅ Auto-select first category when categories load
+  // ✅ Auto-select first category when categories load (only if not set via URL)
   useEffect(() => {
     if (categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0]);
+      setParams({ category: categories[0] });
     }
-  }, [categories, selectedCategory]);
+  }, [categories, selectedCategory, setParams]);
 
   // ✅ Filter by selected category + search (global search when query exists)
   const filteredProducts = useMemo(() => {
@@ -175,13 +197,13 @@ const MenuPage = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => setParams({ q: e.target.value || null })}
               placeholder="Search all products..."
               className="pl-9 pr-9 rounded-xl"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => setParams({ q: null })}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Clear search"
               >
@@ -197,7 +219,7 @@ const MenuPage = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setViewMode("grid")}
+                onClick={() => setParams({ view: "grid" })}
                 className={viewMode === "grid" ? "bg-white shadow-sm" : ""}
               >
                 <LayoutGrid className="h-4 w-4" />
@@ -205,7 +227,7 @@ const MenuPage = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setViewMode("list")}
+                onClick={() => setParams({ view: "list" })}
                 className={viewMode === "list" ? "bg-white shadow-sm" : ""}
               >
                 <List className="h-4 w-4" />
@@ -213,7 +235,10 @@ const MenuPage = () => {
             </div>
 
             {/* Sort Dropdown */}
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select 
+              value={sortBy} 
+              onValueChange={(value) => setParams({ sort: value as typeof sortBy })}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -239,7 +264,7 @@ const MenuPage = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSearchQuery("")}
+                onClick={() => setParams({ q: null })}
                 className="text-secondary hover:text-secondary/80"
               >
                 Clear search
@@ -257,7 +282,7 @@ const MenuPage = () => {
                   <ItemBadge
                     title={cat}
                     active={selectedCategory === cat}
-                    onClick={() => setSelectedCategory(cat)}
+                    onClick={() => setParams({ category: cat })}
                     size="md"
                   />
                 </div>
@@ -280,7 +305,7 @@ const MenuPage = () => {
             <p>No items found.</p>
             {searchQuery && (
               <Button
-                onClick={() => setSearchQuery("")}
+                onClick={() => setParams({ q: null })}
                 className="mt-4"
                 variant="outline"
               >
@@ -305,8 +330,7 @@ const MenuPage = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setSelectedCategory(category);
-                      setSearchQuery("");
+                      setParams({ category: category, q: null });
                     }}
                     className="text-secondary  border-secondary hover:bg-secondary hover:text-white"
                   >
@@ -359,8 +383,7 @@ const MenuPage = () => {
                     <Button
                       variant="ghost"
                       onClick={() => {
-                        setSelectedCategory(category);
-                        setSearchQuery("");
+                        setParams({ category: category, q: null });
                       }}
                       className="text-secondary hover:text-secondary/80"
                     >

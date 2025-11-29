@@ -38,6 +38,13 @@ export const heroSlide = defineType({
       initialValue: 'Order Now',
     }),
     defineField({
+      name: 'buttonLink',
+      title: 'Button Link',
+      type: 'url',
+      description: 'Link for the call-to-action button',
+      validation: (Rule) => Rule.required().uri({ allowRelative: true }),
+    }),
+    defineField({
       name: 'order',
       title: 'Order',
       type: 'number',

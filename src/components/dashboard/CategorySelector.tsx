@@ -69,18 +69,16 @@ export default function CategorySelector({
   const handleCreateCategory = async (values: CategoryFormValues) => {
     setIsCreatingCategory(true);
     try {
-      const newCategory = await createCategory({
+      const newCategory = await createCategory.mutateAsync({
         category_name: values.category_name,
         description: values.description || "",
       });
-
-      toast.success("Category created successfully!");
       onChange(newCategory.category_name);
       setIsDialogOpen(false);
       categoryForm.reset();
     } catch (error) {
-      toast.error("Failed to create category");
       console.error(error);
+      // Error toast is handled by the mutation
     } finally {
       setIsCreatingCategory(false);
     }

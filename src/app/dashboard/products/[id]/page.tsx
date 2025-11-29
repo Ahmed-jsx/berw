@@ -69,6 +69,9 @@ export default function EditProductPage() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+
+  // Use isPending from mutation for loading state
+  const isCreating = isCreatingCategory || createCategory.isPending;
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [hasNewImage, setHasNewImage] = useState(false);
 
@@ -119,17 +122,16 @@ export default function EditProductPage() {
   const handleCreateCategory = async (values: CategoryFormValues) => {
     setIsCreatingCategory(true);
     try {
-      const newCategory = await createCategory({
+      const newCategory = await createCategory.mutateAsync({
         category_name: values.category_name,
         description: values.description || "",
       });
-      toast.success("Category created successfully!");
       form.setValue("category", newCategory.category_name);
       setIsDialogOpen(false);
       categoryForm.reset();
     } catch (error) {
-      toast.error("Failed to create category");
       console.error(error);
+      // Error toast is handled by the mutation
     } finally {
       setIsCreatingCategory(false);
     }
@@ -529,16 +531,16 @@ export default function EditProductPage() {
                     setIsDialogOpen(false);
                     categoryForm.reset();
                   }}
-                  disabled={isCreatingCategory}
+                  disabled={isCreating}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   className="bg-teal-600 hover:bg-teal-700"
-                  disabled={isCreatingCategory}
+                  disabled={isCreating}
                 >
-                  {isCreatingCategory ? (
+                  {isCreating ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Creating...

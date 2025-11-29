@@ -3,40 +3,37 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
-  Coffee,
-  Cookie,
-  Filter,
   Search,
-  Soup,
   UtensilsCrossed,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
+  LayoutGrid,
+  List,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import ItemCard from "@/components/ItemCard";
+import ItemCardList from "@/components/ItemCardList";
+import ItemBadge from "@/components/ItemBadge";
 import { useProducts } from "@/hooks/useProducts";
 
 const MenuPage = () => {
   const { data: products, isLoading, error } = useProducts();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState("name");
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(12);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [visibleCount, setVisibleCount] = useState(12);
 
   // ✅ Safe unique category extraction (ignore null)
   const categories = useMemo(() => {
@@ -47,54 +44,72 @@ const MenuPage = () => {
     return [...new Set(valid)];
   }, [products]);
 
-  // ✅ Category icon map
-  const getCategoryIcon = (category: string | null | undefined) => {
-    const c = (category || "Uncategorized").toLowerCase();
-    if (c.includes("coffee") || c.includes("drink")) return Coffee;
-    if (c.includes("main") || c.includes("meal")) return UtensilsCrossed;
-    if (c.includes("dessert") || c.includes("sweet")) return Cookie;
-    if (c.includes("soup") || c.includes("starter")) return Soup;
-    return UtensilsCrossed;
-  };
+  // ✅ Auto-select first category when categories load
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0]);
+    }
+  }, [categories, selectedCategory]);
 
-  // ✅ Filter + sort
+  // ✅ Filter by selected category + search (global search when query exists)
   const filteredProducts = useMemo(() => {
-    if (!products) return [];
+    if (!products || !selectedCategory) return [];
+    
     let list = products.filter((p) => {
-      const matchesSearch =
-        p.product_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.product_components?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory =
-        selectedCategory === "all" ||
-        (p.product_category || "Uncategorized") === selectedCategory;
-      return matchesSearch && matchesCategory;
+      // If there's a search query, search globally across all products
+      if (searchQuery) {
+        const matchesSearch =
+          p.product_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.product_components?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesSearch;
+      }
+      
+      // If no search query, filter by selected category only
+      const matchesCategory = (p.product_category || "Uncategorized") === selectedCategory;
+      return matchesCategory;
     });
 
+    // Sort products
     list.sort((a, b) => {
       switch (sortBy) {
         case "price-low":
           return +a.product_price - +b.product_price;
         case "price-high":
           return +b.product_price - +a.product_price;
-        case "featured":
-          return b.is_featured ? 1 : -1;
         default:
           return a.product_name.localeCompare(b.product_name);
       }
     });
 
     return list;
-  }, [products, searchQuery, selectedCategory, sortBy]);
+  }, [products, selectedCategory, searchQuery, sortBy]);
 
-  // ✅ Pagination calculations
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+  // ✅ Group products by category when searching
+  const groupedProducts = useMemo(() => {
+    if (!searchQuery || !products) return null;
+    
+    const grouped: Record<string, typeof filteredProducts> = {};
+    filteredProducts.forEach(product => {
+      const category = product.product_category || "Uncategorized";
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(product);
+    });
+    return grouped;
+  }, [filteredProducts, searchQuery, products]);
 
-  // ✅ Reset to page 1 when filters change
+  // ✅ Count total categories with results
+  const categoriesWithResults = groupedProducts 
+    ? Object.keys(groupedProducts).length 
+    : 0;
+
+  // ✅ Visible products for category view (Load More)
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+
+  // ✅ Reset visible count when filters change
   useEffect(() => {
-    setCurrentPage(1);
+    setVisibleCount(12);
   }, [searchQuery, selectedCategory, sortBy]);
 
  
@@ -102,22 +117,27 @@ const MenuPage = () => {
   // ✅ Skeleton Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col gap-6 p-6">
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-1/3" />
-          <Skeleton className="h-5 w-1/4" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="overflow-hidden rounded-2xl">
-              <Skeleton className="h-48 w-full" />
-              <CardContent className="space-y-2 p-4">
-                <Skeleton className="h-5 w-2/3" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-8 w-1/3" />
-              </CardContent>
-            </Card>
-          ))}
+      <div className="min-h-screen bg-background flex flex-col gap-6 p-6 pt-32">
+        <div className="max-w-6xl mx-auto w-full space-y-6">
+          {/* Category skeleton */}
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-32 rounded-full flex-none" />
+            ))}
+          </div>
+          {/* Products skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="overflow-hidden rounded-2xl">
+                <Skeleton className="h-48 w-full" />
+                <CardContent className="space-y-2 p-4">
+                  <Skeleton className="h-5 w-2/3" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-8 w-1/3" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -138,7 +158,7 @@ const MenuPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* HERO */}
-      <div className="relative bg-secondary text-primary-foreground py-20  px-6 text-center">
+      <div className="relative bg-secondary text-primary-foreground py-20 px-6 text-center">
         <h1 className="text-4xl md:text-6xl mt-24 font-bold mb-2">Our Menu</h1>
         <p className="text-white/80 max-w-2xl mx-auto text-sm md:text-lg">
           Discover our handcrafted creations made with love and the finest
@@ -146,165 +166,217 @@ const MenuPage = () => {
         </p>
       </div>
 
-      {/* Mobile Search */}
-      <div className="lg:hidden sticky top-0 z-30 bg-background border-b px-4 py-3">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        {/* Search Bar + View Toggle + Sort */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          {/* Search Bar */}
+          <div className="relative flex-1 max-w-xl w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search menu..."
-              className="pl-9"
+              placeholder="Search all products..."
+              className="pl-9 pr-9 rounded-xl"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setShowMobileFilters(true)}
-          >
-            <Filter className="h-4 w-4" />
-          </Button>
+
+          {/* View Toggle + Sort */}
+          <div className="flex items-center gap-3">
+            {/* View Toggle Buttons */}
+            <div className="flex lg:hidden items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setViewMode("grid")}
+                className={viewMode === "grid" ? "bg-white shadow-sm" : ""}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setViewMode("list")}
+                className={viewMode === "list" ? "bg-white shadow-sm" : ""}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Sort Dropdown */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name A-Z</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
 
-      {/* Mobile Filters Sheet */}
-      <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
-        <SheetContent side="bottom" className="max-h-[85vh] p-6 overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Filters</SheetTitle>
-          </SheetHeader>
-
-          <div className="mt-4 space-y-6">
-            {/* Categories */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Categories</h4>
-              <div className="space-y-2">
-                <Button
-                  variant={selectedCategory === "all" ? "default" : "outline"}
-                  className="w-full justify-start"
-                  onClick={() => setSelectedCategory("all")}
-                >
-                  All Items
-                </Button>
-                {categories.map((cat) => {
-                  const Icon = getCategoryIcon(cat);
-                  return (
-                    <Button
-                      key={cat}
-                      variant={selectedCategory === cat ? "default" : "outline"}
-                      className="w-full justify-start gap-2"
-                      onClick={() => setSelectedCategory(cat)}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {cat}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Sort */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Sort By</h4>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full bg-muted rounded-lg px-3 py-2 text-sm"
-              >
-                <option value="name">Name</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="featured">Featured</option>
-              </select>
-            </div>
-
-            <Button
-              onClick={() => setShowMobileFilters(false)}
-              className="w-full"
-            >
-              Apply Filters
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Main Layout */}
-      <div className="max-w-7xl mx-auto flex">
-        {/* Sidebar (Desktop) */}
-        <aside className="hidden lg:block w-72 border-r border-border p-6 space-y-8">
-          <div>
-            <h3 className="text-sm font-medium mb-2">Search</h3>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search menu..."
-                className="pl-9"
-              />
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium mb-2">Categories</h3>
-            <div className="space-y-2">
-              <Button
-                variant={selectedCategory === "all" ? "default" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => setSelectedCategory("all")}
-              >
-                All Items
-              </Button>
-              {categories.map((cat) => {
-                const Icon = getCategoryIcon(cat);
-                return (
-                  <Button
-                    key={cat}
-                    variant={selectedCategory === cat ? "default" : "ghost"}
-                    className="w-full justify-start gap-2"
-                    onClick={() => setSelectedCategory(cat)}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {cat}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-        </aside>
-
-        {/* Products */}
-        <main className="flex-1 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold">
-                {selectedCategory === "all" ? "All Items" : selectedCategory}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {filteredProducts.length} items found
+        {/* Search Results Summary - Show when searching */}
+        {searchQuery && (
+          <div className="mb-6 p-4 bg-secondary/10 rounded-xl border border-secondary/20">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-secondary">
+                Found <span className="font-bold">{filteredProducts.length}</span> products
+                {categoriesWithResults > 0 && (
+                  <> in <span className="font-bold">{categoriesWithResults}</span> {categoriesWithResults === 1 ? 'category' : 'categories'}</>
+                )}
               </p>
-            </div>
-          </div>
-
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <Search className="h-10 w-10 mx-auto mb-4" />
-              <p>No items found. Try adjusting your search or filters.</p>
               <Button
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCategory("all");
-                }}
-                className="mt-4"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery("")}
+                className="text-secondary hover:text-secondary/80"
               >
-                Clear Filters
+                Clear search
               </Button>
             </div>
-          ) : (
-            <>
+          </div>
+        )}
+
+        {/* Category Badges - Hide when searching */}
+        {!searchQuery && (
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto scrollbar-hide snap-x snap-mandatory mb-8">
+            <div className="flex flex-nowrap gap-3 min-w-max">
+              {categories.map((cat) => (
+                <div key={cat} className="flex-none snap-center">
+                  <ItemBadge
+                    title={cat}
+                    active={selectedCategory === cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    size="md"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Selected Category Title - Hide when searching */}
+        {!searchQuery && selectedCategory && (
+          <h2 className="text-3xl font-bold text-secondary mb-6">
+            {selectedCategory}
+          </h2>
+        )}
+
+        {/* Products Display */}
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <Search className="h-10 w-10 mx-auto mb-4" />
+            <p>No items found.</p>
+            {searchQuery && (
+              <Button
+                onClick={() => setSearchQuery("")}
+                className="mt-4"
+                variant="outline"
+              >
+                Clear Search
+              </Button>
+            )}
+          </div>
+        ) : searchQuery && groupedProducts ? (
+          // ✅ Categorized Search Results
+          <div className="space-y-10">
+            {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+              <div key={category} className="space-y-4">
+                {/* Category Header */}
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  <h3 className="text-2xl font-bold text-secondary">
+                    {category}
+                    <span className="text-base font-normal text-muted-foreground ml-2">
+                      ({categoryProducts.length} {categoryProducts.length === 1 ? 'item' : 'items'})
+                    </span>
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCategory(category);
+                      setSearchQuery("");
+                    }}
+                    className="text-secondary border-secondary hover:bg-secondary hover:text-white"
+                  >
+                    View all in {category}
+                  </Button>
+                </div>
+                
+                {/* Category Products - Show max 6 */}
+                {viewMode === "grid" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {categoryProducts.slice(0, 6).map((product) => (
+                      <Link
+                        key={product.product_id}
+                        href={`/menu/${product.product_id}`}
+                      >
+                        <ItemCard
+                          id={product.product_id}
+                          name={product.product_name}
+                          description={product.product_components}
+                          price={parseFloat(product.product_price)}
+                          product_photo={product.product_photo}
+                          isFeatured={product.is_featured}
+                        />
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {categoryProducts.slice(0, 6).map((product) => (
+                      <Link
+                        key={product.product_id}
+                        href={`/menu/${product.product_id}`}
+                        className="block"
+                      >
+                        <ItemCardList
+                          id={product.product_id}
+                          name={product.product_name}
+                          description={product.product_components}
+                          price={parseFloat(product.product_price)}
+                          product_photo={product.product_photo}
+                        />
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Show more link if there are more products */}
+                {categoryProducts.length > 6 && (
+                  <div className="text-center pt-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedCategory(category);
+                        setSearchQuery("");
+                      }}
+                      className="text-secondary hover:text-secondary/80"
+                    >
+                      +{categoryProducts.length - 6} more items in {category}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          // ✅ Regular Category View with Load More
+          <>
+            {viewMode === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {paginatedProducts.map((product) => (
+                {visibleProducts.map((product) => (
                   <Link
                     key={product.product_id}
                     href={`/menu/${product.product_id}`}
@@ -320,68 +392,40 @@ const MenuPage = () => {
                   </Link>
                 ))}
               </div>
+            ) : (
+              <div className="space-y-4">
+                {visibleProducts.map((product) => (
+                  <Link
+                    key={product.product_id}
+                    href={`/menu/${product.product_id}`}
+                    className="block"
+                  >
+                    <ItemCardList
+                      id={product.product_id}
+                      name={product.product_name}
+                      description={product.product_components}
+                      price={parseFloat(product.product_price)}
+                      product_photo={product.product_photo}
+                    />
+                  </Link>
+                ))}
+              </div>
+            )}
 
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="mt-8 relative">
-                  {/* Glass effect container */}
-                  <div className="relative rounded-2xl px-4 py-3 sm:px-6 shadow-lg overflow-hidden backdrop-blur-xl bg-black/30 border border-white/20">
-                    <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div className="text-sm text-white/80 font-medium">
-                        Showing {startIndex + 1} to{" "}
-                        {Math.min(endIndex, filteredProducts.length)} of{" "}
-                        {filteredProducts.length} items
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setCurrentPage(1)}
-                          disabled={currentPage === 1}
-                          className="h-9 w-9 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-primary/50 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                        >
-                          <ChevronsLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setCurrentPage(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          className="h-9 w-9 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-primary/50 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl backdrop-blur-md bg-primary/70 border border-primary/30">
-                          <span className="text-sm text-white font-semibold">
-                            Page {currentPage} of {totalPages}
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setCurrentPage(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          className="h-9 w-9 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-primary/50 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setCurrentPage(totalPages)}
-                          disabled={currentPage === totalPages}
-                          className="h-9 w-9 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-primary/50 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                        >
-                          <ChevronsRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </main>
+            {/* Load More Button - Replace pagination */}
+            {filteredProducts.length > visibleCount && (
+              <div className="mt-8 text-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setVisibleCount(prev => prev + 12)}
+                  className="px-8 py-6 text-base"
+                >
+                  Load More ({filteredProducts.length - visibleCount} remaining)
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

@@ -133,17 +133,19 @@ export function ExploreCoffee() {
 
 
         {/* ✅ Category badges */}
-        <div className="mt-6 flex flex-wrap gap-3 justify-center">
-          {categories.map((cat) => (
-            <ItemBadge
-              key={cat.value}
-              title={cat.label}
-              image={cat.image}
-              active={effectiveActive === cat.value}
-              onClick={() => setActive(cat.value as any)}
-              size="md"
-            />
-          ))}
+        <div className="mt-6 -mx-4 px-4 lg:mx-0 lg:px-0 overflow-x-auto scrollbar-hide snap-x snap-mandatory lg:overflow-visible">
+          <div className="flex flex-nowrap lg:flex-wrap gap-3 lg:justify-center min-w-max lg:min-w-0">
+            {categories.map((cat) => (
+              <div key={cat.value} className="flex-none text-center snap-center lg:snap-none">
+                <ItemBadge
+                  title={cat.label}
+                  active={effectiveActive === cat.value}
+                  onClick={() => setActive(cat.value as any)}
+                  size="md"
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <h3 className="mt-8 text-center text-3xl font-bold text-teal-800">

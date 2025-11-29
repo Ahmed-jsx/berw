@@ -5,6 +5,7 @@ import {
   IconShoppingCart,
   IconListDetails,
   IconUsers,
+  IconList,
 } from "@tabler/icons-react";
 import * as React from "react";
 
@@ -53,6 +54,11 @@ const data = {
       title: "Extras",
       url: "/dashboard/extras", // Fixed: Added leading slash and proper path
       icon: SquarePlus,
+    },
+    {
+      title: "Categories",
+      url: "/dashboard/catogrey", // Fixed: Added leading slash and proper path
+      icon: IconList,
     },
   ],
 };

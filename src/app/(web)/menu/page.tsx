@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   Coffee,
   Cookie,
   Filter,
-  Loader2,
   Search,
   Soup,
   UtensilsCrossed,
-  X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import ItemCard from "@/components/ItemCard";
-import MenuCard from "@/components/MenuCard";
 import { useProducts } from "@/hooks/useProducts";
 
 const MenuPage = () => {
@@ -35,6 +35,8 @@ const MenuPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12);
 
   // ✅ Safe unique category extraction (ignore null)
   const categories = useMemo(() => {
@@ -83,6 +85,17 @@ const MenuPage = () => {
 
     return list;
   }, [products, searchQuery, selectedCategory, sortBy]);
+
+  // ✅ Pagination calculations
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // ✅ Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, sortBy]);
 
  
 
@@ -157,7 +170,7 @@ const MenuPage = () => {
 
       {/* Mobile Filters Sheet */}
       <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
+        <SheetContent side="bottom" className="max-h-[85vh] p-6 overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Filters</SheetTitle>
           </SheetHeader>
@@ -289,23 +302,84 @@ const MenuPage = () => {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <Link
-                  key={product.product_id}
-                  href={`/menu/${product.product_id}`}
-                >
-                  <ItemCard
-                    id={product.product_id}
-                    name={product.product_name}
-                    description={product.product_components}
-                    price={parseFloat(product.product_price)}
-                    product_photo={product.product_photo}
-                    isFeatured={product.is_featured}
-                  />
-                </Link>
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedProducts.map((product) => (
+                  <Link
+                    key={product.product_id}
+                    href={`/menu/${product.product_id}`}
+                  >
+                    <ItemCard
+                      id={product.product_id}
+                      name={product.product_name}
+                      description={product.product_components}
+                      price={parseFloat(product.product_price)}
+                      product_photo={product.product_photo}
+                      isFeatured={product.is_featured}
+                    />
+                  </Link>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-8 relative">
+                  {/* Glass effect container */}
+                  <div className="relative rounded-2xl px-4 py-3 sm:px-6 shadow-lg overflow-hidden backdrop-blur-xl bg-black/30 border border-white/20">
+                    <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="text-sm text-white/80 font-medium">
+                        Showing {startIndex + 1} to{" "}
+                        {Math.min(endIndex, filteredProducts.length)} of{" "}
+                        {filteredProducts.length} items
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setCurrentPage(1)}
+                          disabled={currentPage === 1}
+                          className="h-9 w-9 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-primary/50 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          <ChevronsLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setCurrentPage(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="h-9 w-9 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-primary/50 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl backdrop-blur-md bg-primary/70 border border-primary/30">
+                          <span className="text-sm text-white font-semibold">
+                            Page {currentPage} of {totalPages}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setCurrentPage(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="h-9 w-9 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-primary/50 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setCurrentPage(totalPages)}
+                          disabled={currentPage === totalPages}
+                          className="h-9 w-9 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 hover:border-primary/50 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          <ChevronsRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>

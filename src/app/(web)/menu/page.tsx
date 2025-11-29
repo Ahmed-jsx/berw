@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import {
@@ -33,7 +33,8 @@ import { getProductUrl } from "@/lib/utils/url";
 const sortOptions = ["name", "price-low", "price-high"] as const;
 const viewModes = ["grid", "list"] as const;
 
-const MenuPage = () => {
+// Menu Content Component (uses useQueryStates - needs Suspense)
+const MenuPageContent = () => {
   const { data: products, isLoading, error } = useProducts();
 
   // ✅ Replace useState with nuqs - syncs with URL
@@ -499,6 +500,42 @@ const MenuPage = () => {
         )}
       </div>
     </div>
+  );
+};
+
+// Loading fallback for Suspense
+const MenuPageSkeleton = () => (
+  <div className="min-h-screen bg-background flex flex-col gap-6 p-6 pt-32">
+    <div className="max-w-6xl mx-auto w-full space-y-6">
+      {/* Category skeleton */}
+      <div className="flex gap-3 overflow-x-auto pb-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-32 rounded-full flex-none" />
+        ))}
+      </div>
+      {/* Products skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card key={i} className="overflow-hidden rounded-2xl">
+            <Skeleton className="h-48 w-full" />
+            <CardContent className="space-y-2 p-4">
+              <Skeleton className="h-5 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-8 w-1/3" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// Main Menu Page Component with Suspense
+const MenuPage = () => {
+  return (
+    <Suspense fallback={<MenuPageSkeleton />}>
+      <MenuPageContent />
+    </Suspense>
   );
 };
 

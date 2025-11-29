@@ -325,8 +325,8 @@ export default function ProductClient({ id }: ProductClientProps) {
                   <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 lg:mb-6 leading-tight">
                     {product.product_name}
                   </h1>
-                  <div className="bg-secondary/80 backdrop-blur-md rounded-full px-3 py-1.5 sm:px-4 sm:py-2 inline-block">
-                    <span className="text-xs sm:text-sm md:text-base text-secondary-foreground font-medium">
+                  <div className="bg-primary/10 border border-primary/20 backdrop-blur-md rounded-full px-3 py-1.5 sm:px-4 sm:py-2 inline-block">
+                    <span className="text-xs sm:text-sm md:text-base text-primary font-medium">
                       {product.product_category}
                     </span>
                   </div>

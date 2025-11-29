@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getProductUrl } from "@/lib/utils/url";
 
 interface ItemCardListProps {
   id: number;
@@ -40,12 +41,20 @@ const ItemCardList = ({
       : "/bg1.png";
 
   const handleCardClick = () => {
-    router.push(`${route}/${id}`);
+    if (route === "/menu") {
+      router.push(getProductUrl(id, name));
+    } else {
+      router.push(`${route}/${id}`);
+    }
   };
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`${route}/${id}`);
+    if (route === "/menu") {
+      router.push(getProductUrl(id, name));
+    } else {
+      router.push(`${route}/${id}`);
+    }
   };
 
   return (

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion, useAnimation } from "motion/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getProductUrl } from "@/lib/utils/url";
 
 interface ItemCardProps {
   id: number;
@@ -69,7 +70,11 @@ const ItemCard = ({
     : { initial: "rest", whileHover: "hover", animate: "rest" };
 
   const handleCardClick = () => {
-    router.push(`${route}/${id}`);
+    if (route === "/menu") {
+      router.push(getProductUrl(id, name));
+    } else {
+      router.push(`${route}/${id}`);
+    }
   };
 
   return (
@@ -120,7 +125,11 @@ const ItemCard = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`${route}/${id}`);
+                  if (route === "/menu") {
+                    router.push(getProductUrl(id, name));
+                  } else {
+                    router.push(`${route}/${id}`);
+                  }
                 }}
                 className="bg-white text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
               >
@@ -157,7 +166,11 @@ const ItemCard = ({
               variants={itemVariants}
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`${route}/${id}`);
+                if (route === "/menu") {
+                  router.push(getProductUrl(id, name));
+                } else {
+                  router.push(`${route}/${id}`);
+                }
               }}
               className="w-full bg-primary text-black py-2 mt-2 rounded-md font-medium text-sm hover:bg-gray-200 transition-colors"
             >

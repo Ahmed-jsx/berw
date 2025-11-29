@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import {
   Search,
   UtensilsCrossed,
@@ -26,6 +27,7 @@ import ItemCard from "@/components/ItemCard";
 import ItemCardList from "@/components/ItemCardList";
 import ItemBadge from "@/components/ItemBadge";
 import { useProducts } from "@/hooks/useProducts";
+import { getProductUrl } from "@/lib/utils/url";
 
 // Define the valid sort options and view modes
 const sortOptions = ["name", "price-low", "price-high"] as const;
@@ -389,7 +391,7 @@ const MenuPage = () => {
                     {categoryProducts.slice(0, 6).map((product) => (
                       <Link
                         key={product.product_id}
-                        href={`/menu/${product.product_id}`}
+                        href={getProductUrl(product.product_id, product.product_name) as Route}
                       >
                         <ItemCard
                           id={product.product_id}
@@ -407,7 +409,7 @@ const MenuPage = () => {
                     {categoryProducts.slice(0, 6).map((product) => (
                       <Link
                         key={product.product_id}
-                        href={`/menu/${product.product_id}`}
+                        href={getProductUrl(product.product_id, product.product_name) as Route}
                         className="block"
                       >
                         <ItemCardList
@@ -448,7 +450,7 @@ const MenuPage = () => {
                 {visibleProducts.map((product) => (
                   <Link
                     key={product.product_id}
-                    href={`/menu/${product.product_id}`}
+                    href={getProductUrl(product.product_id, product.product_name) as Route}
                   >
                     <ItemCard
                       id={product.product_id}
@@ -466,7 +468,7 @@ const MenuPage = () => {
                 {visibleProducts.map((product) => (
                   <Link
                     key={product.product_id}
-                    href={`/menu/${product.product_id}`}
+                    href={getProductUrl(product.product_id, product.product_name) as Route}
                     className="block"
                   >
                     <ItemCardList

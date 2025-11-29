@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import ShareButtons from "@/components/product/ShareButtons";
 
 // Form schema
 const orderFormSchema = z.object({
@@ -399,12 +400,22 @@ export default function ProductClient({ id }: ProductClientProps) {
 
       {/* Extras and Notes */}
       <section className="py-6 sm:py-8 lg:py-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12   gap-6 sm:gap-8 lg:gap-10">
-          <div className="lg:col-span-8 w-full space-y-5 sm:space-y-6 lg:space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10">
+          {/* Titles Row */}
+          <div className="lg:col-span-8">
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
               Any extras?
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 w-full gap-4 sm:gap-5 lg:gap-6">
+          </div>
+          <div className="lg:col-span-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+              Share this product
+            </h2>
+          </div>
+          
+          {/* Content Row */}
+          <div className="lg:col-span-8 h-full w-full space-y-5 sm:space-y-6 lg:space-y-8">
+            <div className="grid grid-cols-1 grid-rows-2 sm:grid-cols-2  w-full gap-4 sm:gap-5 lg:gap-6">
               {extras.map((extra) => {
                 const extraQuantity = getExtraQuantity(extra.id);
                 return (
@@ -491,7 +502,17 @@ export default function ProductClient({ id }: ProductClientProps) {
             )}
           </div>
 
-       
+          {/* Second Column - Share Buttons */}
+          <div className="lg:col-span-4">
+            <Card className="p-4 sm:p-5 justify-center  row-span-2 h-full lg:p-6 bg-primary/10 backdrop-blur-lg border border-primary/20 hover:shadow-md transition-shadow">
+              <ShareButtons
+                productId={product.product_id}
+                productName={product.product_name}
+                productPrice={parseFloat(product.product_price)}
+                productImage={product.product_photo}
+              />
+            </Card>
+          </div>
         </div>
       </section>
     </>

@@ -17,6 +17,7 @@ const fallbackSlides = [
     description:
       "At Monkey Brew, we craft our Spanish Latte with care-rich, creamy, and full of flavor. Along with our special coffee drinks, it's one of the many reasons coffee lovers choose us every day.",
     buttonText: "Order Now",
+    buttonLink: "/menu",
   },
   {
     image: "/bg1.png",
@@ -24,6 +25,7 @@ const fallbackSlides = [
     description:
       "Our master baristas use premium beans and precise techniques to create espresso shots that are smooth, bold, and unforgettable. Taste the difference quality makes.",
     buttonText: "Order Now",
+    buttonLink: "/menu",
   },
   {
     image: "/bg1.png",
@@ -31,6 +33,7 @@ const fallbackSlides = [
     description:
       "Slow-steeped for 16 hours to bring out smooth, naturally sweet flavors. Our cold brew is the perfect refreshment for any time of day.",
     buttonText: "Order Now",
+    buttonLink: "/menu",
   },
 ];
 
@@ -63,6 +66,7 @@ export default function Hero() {
           title: slide.title || "Welcome",
           description: slide.description || "",
           buttonText: slide.buttonText || "Order Now",
+          buttonLink: slide.buttonLink || "/menu",
         };
       })
     : fallbackSlides;
@@ -200,7 +204,7 @@ export default function Hero() {
                 </p>
 
                 {/* CTA Button */}
-                <Link href="/menu">
+                <Link href={slides[currentSlide].buttonLink || "/menu"}>
                   <div className="pt-4">
                     <Button
                       size="lg"

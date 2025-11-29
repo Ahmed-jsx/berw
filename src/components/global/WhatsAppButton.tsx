@@ -8,7 +8,8 @@ const WhatsAppButton = ({ phoneNumber: propPhoneNumber }: WhatsAppButtonProps = 
   const pathname = usePathname();
   const isDashboard = pathname.includes("/dashboard");
   const isCahsier = pathname.includes("/cashier");
-  if (isDashboard || isCahsier) {
+  const isStudio = pathname.includes("/studio");
+  if (isDashboard || isCahsier || isStudio) {
     return null;
   }
   // Get phone number from prop, environment variable, or empty string

@@ -68,12 +68,26 @@ export default function Hero() {
           console.error("Error generating image URL:", error);
           imageUrl = "/bg1.png";
         }
+        // Handle buttonLink - use actual value from Sanity, only fallback if truly missing
+        const buttonLink = slide.buttonLink && slide.buttonLink.trim() !== "" 
+          ? slide.buttonLink 
+          : "/menu";
+
+        // Debug: Log buttonLink to see what's coming from Sanity
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Hero slide buttonLink:', {
+            fromSanity: slide.buttonLink,
+            final: buttonLink,
+            slideTitle: slide.title
+          });
+        }
+
         return {
           image: imageUrl,
           title: slide.title || "Welcome",
           description: slide.description || "",
           buttonText: slide.buttonText || "Order Now",
-          buttonLink: (slide.buttonLink || "/menu") as string,
+          buttonLink: buttonLink,
         };
       })
     : fallbackSlides;
@@ -212,7 +226,7 @@ export default function Hero() {
 
                 {/* CTA Button */}
                 <div className="pt-4">
-                  <Link href={(slides[currentSlide].buttonLink || "/menu") as Route}>
+                  <Link href={slides[currentSlide].buttonLink as Route}>
                     <Button
                       size="lg"
                       className="bg-primary hover:bg-primary/80  shadow-primary text-black px-12 py-4 rounded-full text-lg font-semibold shadow-[0_0_10px_#FFD700]"

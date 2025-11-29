@@ -43,13 +43,42 @@ const MenuPage = () => {
       view: parseAsStringLiteral(viewModes).withDefault("grid"),
     },
     {
-      history: "push",
-      shallow: false,
+      history: "replace",  // Don't clutter browser history
+      shallow: true,       // Better performance
     }
   );
 
-  // Extract values from params
-  const searchQuery = params.q;
+  // ✅ Local state for search input (for immediate UI feedback)
+  const [localSearchQuery, setLocalSearchQuery] = useState(params.q);
+
+  // Sync from URL to local (for shared links)
+  useEffect(() => {
+    setLocalSearchQuery(params.q);
+  }, [params.q]);
+
+  // ✅ Debounced URL update - optimize for sharing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      // Only update URL if value actually changed
+      if (localSearchQuery !== params.q) {
+        if (localSearchQuery) {
+          // When searching: remove category from URL (search is global)
+          setParams({ 
+            q: localSearchQuery,
+            category: null // Clear category when searching
+          });
+        } else {
+          // When clearing search: only clear search param
+          setParams({ q: null });
+        }
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [localSearchQuery, params.q, setParams]);
+
+  // Extract values from params (use local for search, URL for others)
+  const searchQuery = localSearchQuery; // Use local state for filtering
   const selectedCategory = params.category;
   const sortBy = params.sort;
   const viewMode = params.view;
@@ -66,29 +95,35 @@ const MenuPage = () => {
     return [...new Set(valid)];
   }, [products]);
 
-  // ✅ Auto-select first category when categories load (only if not set via URL)
+  // ✅ Auto-select first category when categories load (only if not set via URL and no search query)
+  // Don't auto-select if user came with a search query - let them see all results
   useEffect(() => {
-    if (categories.length > 0 && !selectedCategory) {
+    if (categories.length > 0 && !selectedCategory && !searchQuery) {
       setParams({ category: categories[0] });
     }
-  }, [categories, selectedCategory, setParams]);
+  }, [categories, selectedCategory, searchQuery, setParams]);
 
   // ✅ Filter by selected category + search (global search when query exists)
   const filteredProducts = useMemo(() => {
-    if (!products || !selectedCategory) return [];
+    if (!products) return [];
     
     let list = products.filter((p) => {
-      // If there's a search query, search globally across all products
+      // If there's a search query, search ALL products (ignore category filter)
       if (searchQuery) {
-        const matchesSearch =
-          p.product_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.product_components?.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesSearch;
+        const searchLower = searchQuery.toLowerCase();
+        return (
+          (p.product_name?.toLowerCase().includes(searchLower) ?? false) ||
+          (p.product_components?.toLowerCase().includes(searchLower) ?? false)
+        );
       }
       
       // If no search query, filter by selected category only
-      const matchesCategory = (p.product_category || "Uncategorized") === selectedCategory;
-      return matchesCategory;
+      if (selectedCategory) {
+        return (p.product_category || "Uncategorized") === selectedCategory;
+      }
+      
+      // If no search and no category, return all products
+      return true;
     });
 
     // Sort products
@@ -196,14 +231,17 @@ const MenuPage = () => {
           <div className="relative flex-1 max-w-xl w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              value={searchQuery}
-              onChange={(e) => setParams({ q: e.target.value || null })}
+              value={localSearchQuery}
+              onChange={(e) => setLocalSearchQuery(e.target.value)}
               placeholder="Search all products..."
               className="pl-9 pr-9 rounded-xl"
             />
-            {searchQuery && (
+            {localSearchQuery && (
               <button
-                onClick={() => setParams({ q: null })}
+                onClick={() => {
+                  setLocalSearchQuery("");
+                  setParams({ q: null });
+                }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Clear search"
               >
@@ -264,7 +302,10 @@ const MenuPage = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setParams({ q: null })}
+                onClick={() => {
+                  setLocalSearchQuery("");
+                  setParams({ q: null });
+                }}
                 className="text-secondary hover:text-secondary/80"
               >
                 Clear search
@@ -305,7 +346,10 @@ const MenuPage = () => {
             <p>No items found.</p>
             {searchQuery && (
               <Button
-                onClick={() => setParams({ q: null })}
+                onClick={() => {
+                  setLocalSearchQuery("");
+                  setParams({ q: null });
+                }}
                 className="mt-4"
                 variant="outline"
               >
@@ -330,6 +374,7 @@ const MenuPage = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
+                      setLocalSearchQuery("");
                       setParams({ category: category, q: null });
                     }}
                     className="text-secondary  border-secondary hover:bg-secondary hover:text-white"
@@ -383,6 +428,7 @@ const MenuPage = () => {
                     <Button
                       variant="ghost"
                       onClick={() => {
+                        setLocalSearchQuery("");
                         setParams({ category: category, q: null });
                       }}
                       className="text-secondary hover:text-secondary/80"

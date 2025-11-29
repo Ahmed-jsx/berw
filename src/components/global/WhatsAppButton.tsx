@@ -15,7 +15,7 @@ const WhatsAppButton = ({ phoneNumber: propPhoneNumber }: WhatsAppButtonProps = 
   // Get phone number from prop, environment variable, or empty string
   // Priority: prop > environment variable
   // You can set this in your .env.local file as NEXT_PUBLIC_WHATSAPP_PHONE
-  const phoneNumber = propPhoneNumber || process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "+573178000000";
+  const phoneNumber = propPhoneNumber || process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "+20107 0746917";
 
   // Don't render if phone number is not set
   if (!phoneNumber) {
